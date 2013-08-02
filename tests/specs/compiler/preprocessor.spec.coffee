@@ -1,3 +1,4 @@
+### 
 require.paths.unshift( '../../..' )
   
 PreProcessor = require "src/compiler/preprocessor"
@@ -197,7 +198,6 @@ describe "PreProcessor", ->
     checkDeferred $.when(preprocessor.process(project)), (obsPreprocessedSource) =>
       expect(obsPreprocessedSource).toBe(expPreProcessedSource)
 
-  ###
   it 'can process project includes',->
     project.addFile
       name:"TestProject.coffee"
@@ -229,14 +229,6 @@ describe "PreProcessor", ->
     
     obsPreprocessedSource = preprocessor.process(project)
     expect(obsPreprocessedSource).toBe(expPreProcessedSource)
-  ###
+###
   
-  
-  #TODO : how to do these
-  ###
-  it 'can process local stl file includes',->
-    project.addFile
-      name:"TestProject"
-      content:"""include ("toto.stl")"""
-  ###
-  
+

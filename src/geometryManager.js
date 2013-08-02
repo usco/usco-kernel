@@ -1,11 +1,12 @@
-module.exports = GeometryManager;
 
-GeometryManager = function() {
+
+function GeometryManager() {
 	//manage instances of geometries
 	this._geometries = {};
+	console.log("gne");
 };
 
-GeometryManager.prototype={
+GeometryManager.prototype = {
 	constructor: GeometryManager,
 
 	registerGeometry: function(geometry)
@@ -28,6 +29,8 @@ GeometryManager.prototype={
 		registerGeometry( geometry );
 	}
 };
+
+module.exports = GeometryManager;
 
 
 
