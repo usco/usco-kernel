@@ -8,7 +8,7 @@
 	"url" : "http://github.com/kaosat-dev/CoffeeSCad-kernel.git"
   },
   "directories": {
-	"lib": "./lib",
+	"lib": "./lib"
 	},
   "dependencies":
   {
@@ -22,8 +22,7 @@
   }, 
   "scripts":
   { "test": "jasmine-node tests/specs/",
-	"prepublish" : "browserify src/kernel.js > kernel.js & ghchangelog --repo https://github.com/kaosat-dev/coffeescad-kernel --out changelog.md --dates -v 2",
-	"start" : "jasmine-node tests/specs/ --autotest --watch src --coffee " 
+	"start" : "jasmine-node tests/specs/ --coffee --autotest --watch src  " 
   }
 	
   
