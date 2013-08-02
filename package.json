@@ -18,12 +18,13 @@
 	"jasmine-node":"1.10.2",
 	"browserify": "git://github.com/kaosat-dev/node-browserify.git",
 	"coffeeify-redux": "0.1.0",
+	"watchify":"0.1.0",
+	"beefy":"",
 	"github-autochangelog":""
   }, 
   "scripts":
-  { "test": "jasmine-node tests/specs/",
-	"start" : "jasmine-node tests/specs/ --coffee --autotest --watch src  " 
+  { "test": "jasmine-node specs/",
+	"start" : "beefy --live src/kernel.js:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify-redux & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
   }
-	
-  
 }
+

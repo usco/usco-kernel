@@ -1,9 +1,10 @@
 'use strict'
 
-var AssetManager = require( "./assetManager")
-var GeometryManager = require( "./geometryManager")
+var AssetManager = require( "./assetManager");
+var GeometryManager = require( "./geometryManager");
+var someVar = require( "./something");
+module.exports = Kernel;
 
-module.exports = Kernel
 
 function Kernel( options ) {
 	if (!(this instanceof Kernel)) return new Kernel( options )

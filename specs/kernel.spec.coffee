@@ -1,6 +1,5 @@
 'use strict'
-console.log("__dirname", __dirname)
-require("../../requires")
+require("../requires")
 kernel = requires("src/kernel")
 
 ###
