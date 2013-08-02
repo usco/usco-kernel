@@ -1,0 +1,30 @@
+{
+  "name": "CoffeeSCad-kernel",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository" :
+  { 
+	"type" : "git",
+	"url" : "http://github.com/kaosat-dev/CoffeeSCad-kernel.git"
+  },
+  "directories": {
+	"lib": "./lib",
+	},
+  "dependencies":
+  {
+	"three": "0.58.9"
+  },
+  "devDependencies": {
+	"jasmine-node":"1.10.2",
+	"browserify": "git://github.com/kaosat-dev/node-browserify.git",
+	"coffeeify-redux": "0.1.0",
+	"github-autochangelog":""
+  }, 
+  "scripts":
+  { "test": "jasmine-node tests/specs/",
+	"prepublish" : "browserify src/kernel.js > kernel.js & ghchangelog --repo https://github.com/kaosat-dev/coffeescad-kernel --out changelog.md --dates -v 2",
+	"start" : "jasmine-node tests/specs/ --autotest --watch src --coffee " 
+  }
+	
+  
+}
