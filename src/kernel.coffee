@@ -2,7 +2,7 @@
 
 AssetManager = require( "./assetManager")
 GeometryManager = require( "./geometryManager")
-module.exports = Kernel
+
 
 class Kernel
   constructor:(options)->
@@ -31,3 +31,4 @@ class Kernel
   setSlicer:( slicer )->
     @slicer = slicer
 
+module.exports = Kernel
