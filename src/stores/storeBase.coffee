@@ -14,7 +14,6 @@ class StoreBase
     defaults = {enabled:true, pubSubModule: null, name:"store", shortName:"", type:"", description: "Store base class", rootUri:"", loggedIn:true, isLoginRequired:false,
     isDataDumpAllowed: false,showPaths:false}
     options = merge defaults, options
-    super( options )
     {@enabled, @pubSubModule, @name, @shortName, @type, @description, @rootUri, @loggedIn, @isLoginRequired} = options
     
     @cachedProjectsList = []

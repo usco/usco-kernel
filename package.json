@@ -1,5 +1,5 @@
 {
-  "name": "CoffeeSCad-kernel",
+  "name": "usco-kernel",
   "version": "0.0.1",
   "license": "MIT",
   "repository" :
@@ -12,7 +12,8 @@
 	},
   "dependencies":
   {
-	"three": "0.58.9"
+	"three": "0.58.9",
+	"esprima":""
   },
   "devDependencies": {
 	"jasmine-node":"1.10.2",
@@ -23,7 +24,7 @@
 	"github-autochangelog":""
   }, 
   "scripts":
-  { "test": "jasmine-node specs/",
+  { "test": "jasmine-node --coffee specs/",
 	"start" : "beefy --live src/kernel.js:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify-redux & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
   }
 }

@@ -1,14 +1,19 @@
 'use strict'
-require("../requires")
-kernel = requires("src/kernel")
+Kernel = require("../src/kernel")
 
-###
+
 describe "Kernel", ->
-  kernel = null
   
   beforeEach ->
-    kernel = new Kernel()
+    #  kernel = new Kernel()
   
+  it 'is a singleton', ->
+    kernel = Kernel.getInstance()
+    kernel2 = Kernel.getInstance()
+    
+    expect(kernel).toEqual(kernel2)
+    
+###
   it 'throws an error if there is no correctly named main file',->
     project.addFile
       name:"NotTheRightName.coffee"
@@ -28,7 +33,7 @@ describe "Kernel", ->
       content:"""include ("TestProject.coffee")"""
       
     expect(()-> (preprocessor.process(project))).toThrow("Circular dependency detected from someOtherFile.coffee to TestProject.coffee")
-###  
+###
 
 
   

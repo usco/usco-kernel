@@ -31,4 +31,12 @@ class Kernel
   setSlicer:( slicer )->
     @slicer = slicer
 
-module.exports = Kernel
+
+kernelInstance = null
+
+module.exports = {
+    getInstance: (options) =>
+        return kernelInstance if kernelInstance?
+        return new Kernel( options )
+}
+
