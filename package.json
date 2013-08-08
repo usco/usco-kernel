@@ -25,7 +25,7 @@
   }, 
   "scripts":
   { "test": "jasmine-node --coffee specs/",
-	"start" : "beefy --live src/kernel.js:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify-redux & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
+	"start" : "beefy --live src/kernel.coffee:coffeescad-kernel 9080 -- --extension '.coffee' -t coffeeify-redux & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
   }
 }
 
