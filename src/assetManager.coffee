@@ -1,12 +1,13 @@
 'use strict'
 
-#manager for lifecyle of assets: external stl, amf, textures, fonts etc
+###*
+ *Manager for lifecyle of assets: external stl, amf, textures, fonts etc
+*###
 class AssetManager
   constructor: ->
   	#manages assets (files)
   	@loaders = {}
   	@_resourceMap = {}
-  	@non = 245
 
   addParser: ( loader )->
 		#add a parser

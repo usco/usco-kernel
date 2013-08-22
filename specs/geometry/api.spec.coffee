@@ -1,11 +1,11 @@
 'use strict'
-Kernel = require("../src/kernel")
+api = require("../../src/geometry/api")
 
-
-describe "Kernel", ->
+describe "basic geometry classes", ->
   
-  beforeEach ->
-    #  kernel = new Kernel()
+  it 'works', ->
+    #duuuh !!
+    console.log("API",api)
     
 ###
   it 'throws an error if there is no correctly named main file',->

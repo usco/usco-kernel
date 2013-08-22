@@ -1,12 +1,12 @@
 THREE = require( 'three' )
-ThreeCSG =  require( 'ThreeCSG' )
+ThreeCSG =  require( '../../vendor/ThreeCSG' )
   
 #TODO: where to do canonicalization and normalization?
 #TODO: review inheritance : basic geometry (cube, sphere) should not have children etc (like "mesh") but should have position, rotation etc
-#TODO: add connectors ?
+#TODO: add connectors
 
 class ObjectBase extends THREE.Mesh
-  #base class regrouping feature of THREE.Mesh and THREE.CSG
+  #base class regrouping features of THREE.Mesh and THREE.CSG
   
   constructor:( geometry, material )->
     if not material?
@@ -15,7 +15,7 @@ class ObjectBase extends THREE.Mesh
       spec= 1000
       opacity = 1
       material = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
-    super(geometry, material)
+    #super(geometry, material)
     THREE.Mesh.call( @, geometry, material )
     
     #FIXME: see THREE.jS constructors thingamajig
@@ -25,11 +25,10 @@ class ObjectBase extends THREE.Mesh
     
     @connectors = []
   
-  
   color:(rgba)->
     @material.color = rgba
     
-  
+  #------CSG Methods------#
   union:(object)=>
     @bsp = new ThreeBSP(@)
     if not object.bsp?
@@ -65,4 +64,4 @@ class ObjectBase extends THREE.Mesh
     @geometry = @bsp.toGeometry()
     @geometry.computeVertexNormals()
   
-  return ObjectBase
+module.exports = ObjectBase
