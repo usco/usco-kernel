@@ -11,7 +11,6 @@ class PreProcessor
     
     @resolvedIncludes = []
     @unresolvedIncludes = []
-    
   
   _localSourceFetchHandler:([store,project,path,deferred])=>
     #console.log "handler recieved #{store}/#{project}/#{path}"
@@ -66,7 +65,9 @@ class PreProcessor
     
     return @deferred.promise()
   
-  
+  ###* 
+  * Find any parameters given to the script
+  ###
   _findParams:(source)=>
     source = source or ""
     
@@ -122,6 +123,23 @@ class PreProcessor
       match = @includePattern.exec(source)
     return matches
   
+  
+  ###* 
+  * handle the external geometries/object hiearchies inclusion: ie stl, amf, obj etc
+  ###
+  processImports:( filename, source )=>
+    #TODO: how to give access to asset manager
+    #STEP 1 : list all imports
+    #STEP 2 : check if any import has already been cached
+    #STEP 3: check if any cached data needs refreshing
+    
+    shapeImports = findImports( source );
+  
+  
+  
+  ###* 
+  * handle the other projects/files inclusion
+  ###
   processIncludes:(filename, source)=>
     @unresolvedIncludes.push(filename)
    

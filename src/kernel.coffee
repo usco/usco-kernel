@@ -2,10 +2,7 @@
 
 AssetManager = require( "./assetManager")
 GeometryManager = require( "./geometryManager")
-
-Geometry2d = require("./geometry/2d/geometry2d")
-Geometry3d = require("./geometry/3d/geometry3d")
-
+Compiler = require( "./compiler/compiler")
 
 class Kernel
   constructor:(options)->
@@ -14,10 +11,19 @@ class Kernel
     @stores = {}
     @assetManager = new AssetManager( @stores )
     @geometryManager = new GeometryManager()
+    
+    @compiler = new Compiler()
     @slicer = null
 
   compile:( source )->
     source = source or ""
+    compiler.
+  
+  compileFile:( path )->
+    path = path or ""
+    
+  compileProject:( project ) ->
+    project = project or ""
 
   export:( source , outformat )->
     source = source or ""

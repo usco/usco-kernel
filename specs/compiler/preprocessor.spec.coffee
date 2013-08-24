@@ -1,8 +1,5 @@
-### 
-require.paths.unshift( '../../..' )
   
-PreProcessor = require "src/compiler/preprocessor"
-Project = require "src/compiler/preprocessor"
+PreProcessor = require "../../src/compiler/preprocessor"
 #BrowserStore = require "stores/browser/browserStore"
   
 checkDeferred=(df,fn) ->
@@ -24,7 +21,7 @@ describe "PreProcessor", ->
     
     preprocessor = new PreProcessor()
  
-  
+###  
   it 'throws an error if there is no correctly named main file',->
     project.addFile
       name:"NotTheRightName.coffee"

@@ -1,5 +1,5 @@
-CoffeeScript = require 'CoffeeScript'
-geometryKernel = require './geometry/api'
+#CoffeeScript = require 'CoffeeScript'
+#geometryKernel = require './geometry/api'
 
    
 class Processor

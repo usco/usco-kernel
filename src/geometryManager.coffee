@@ -1,6 +1,8 @@
 'use strict'
 
-#manage instances of geometries
+###* 
+* Manages instances of geometries: avoid redundant memory use etc
+###
 class GeometryManager
   constructor:()->
     @_geometries = {}

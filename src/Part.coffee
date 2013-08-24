@@ -1,5 +1,8 @@
-ObjectBase = require './base'
-  
+ObjectBase = require '../geometry/base'
+
+###*** 
+*Base class for defining "parts"
+###
 class Part extends ObjectBase
   constructor:(options)->
     super options
@@ -7,6 +10,8 @@ class Part extends ObjectBase
     #register(@__proto__.constructor.name, @, options)
     defaults = {manufactured:true}
     options = merge defaults, options
+    
+    #should this be even here ?
     @manufactured = options.manufactured
     
 module.exports = Part

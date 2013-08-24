@@ -4,13 +4,15 @@
  *Manager for lifecyle of assets: external stl, amf, textures, fonts etc
 *###
 class AssetManager
-  constructor: ->
+  constructor: ( stores )->
   	#manages assets (files)
-  	@loaders = {}
+  	@stores = stores
+  	@parsers = {}
   	@_resourceMap = {}
 
-  addParser: ( loader )->
+  addParser: ( parser, extension )->
 		#add a parser
+		@parsers[ extension ] = parser
 
   loadResource: ( store, filename )->
     #load resource, store it in resource map

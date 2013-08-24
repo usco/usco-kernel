@@ -7,11 +7,6 @@ describe "Kernel", ->
   beforeEach ->
     #  kernel = new Kernel()
   
-  it 'is a singleton', ->
-    kernel = Kernel.getInstance()
-    kernel2 = Kernel.getInstance()
-    
-    expect(kernel).toEqual(kernel2)
     
 ###
   it 'throws an error if there is no correctly named main file',->
