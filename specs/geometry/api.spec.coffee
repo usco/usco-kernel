@@ -1,4 +1,4 @@
-'use strict'
+###'use strict'
 api = require("../../src/geometry/api")
 
 describe "basic geometry classes", ->
@@ -7,7 +7,7 @@ describe "basic geometry classes", ->
     #duuuh !!
     console.log("API",api)
     
-###
+
   it 'throws an error if there is no correctly named main file',->
     project.addFile
       name:"NotTheRightName.coffee"

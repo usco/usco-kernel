@@ -17,7 +17,6 @@ class Kernel
 
   compile:( source )->
     source = source or ""
-    compiler.
   
   compileFile:( path )->
     path = path or ""

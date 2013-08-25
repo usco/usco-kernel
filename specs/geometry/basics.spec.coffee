@@ -1,4 +1,4 @@
-'use strict'
+###'use strict'
 Geometry2d = require("../../src/geometry/2d/geometry2d")
 Geometry3d = require("../../src/geometry/3d/geometry3d")
 
@@ -18,7 +18,7 @@ describe "basic geometry classes", ->
     kernel = kernel2 = "42"
     expect(kernel).toEqual(kernel2)
     
-###
+
   it 'throws an error if there is no correctly named main file',->
     project.addFile
       name:"NotTheRightName.coffee"

@@ -1,4 +1,4 @@
-'use strict'
+###'use strict'
 Kernel = require("../src/kernel")
 
 
@@ -8,7 +8,7 @@ describe "Kernel", ->
     #  kernel = new Kernel()
   
     
-###
+
   it 'throws an error if there is no correctly named main file',->
     project.addFile
       name:"NotTheRightName.coffee"
