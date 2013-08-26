@@ -2,30 +2,29 @@
   "name": "usco-kernel",
   "version": "0.0.1",
   "license": "MIT",
-  "repository" :
-  { 
-	"type" : "git",
-	"url" : "http://github.com/kaosat-dev/CoffeeSCad-kernel.git"
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/kaosat-dev/CoffeeSCad-kernel.git"
   },
   "directories": {
-	"lib": "./lib"
-	},
-  "dependencies":
-  {
-	"three": "0.58.9",
-	"esprima":""
+    "lib": "./lib"
+  },
+  "dependencies": {
+    "three": "0.58.9",
+    "esprima": ""
   },
   "devDependencies": {
-	"jasmine-node":"1.10.2",
-	"browserify": "git://github.com/kaosat-dev/node-browserify.git",
-	"coffeeify-redux": "0.1.0",
-	"watchify":"0.1.0",
-	"beefy":"",
-	"github-autochangelog":""
-  }, 
-  "scripts":
-  { "test": "jasmine-node --coffee specs/",
-	"start" : "beefy --live src/kernel.coffee:coffeescad-kernel 9080 -- --extension '.coffee' -t coffeeify-redux & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
+    "jasmine-node": "1.10.2",
+    "browserify": "git://github.com/kaosat-dev/node-browserify.git",
+    "coffeeify": "",
+    "coffeeify-redux": "0.1.0",
+    "watchify": "0.1.0",
+    "beefy": "",
+    "github-autochangelog": "",
+    "browserify-shim": "~2.0.8"
+  },
+  "scripts": {
+    "test": "jasmine-node --coffee specs/",
+    "start": "beefy --live src/kernel.coffee:coffeescad-kernel 9080 -- --extension '.coffee' -t coffeeify & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
   }
 }
-

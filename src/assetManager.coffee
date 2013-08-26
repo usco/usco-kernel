@@ -1,7 +1,8 @@
 'use strict'
 
 ###*
- *Manager for lifecyle of assets: external stl, amf, textures, fonts etc
+ *Manager for lifecyle of assets: load, store unload 
+ *For external code files, stl, amf, textures, fonts etc
 *###
 class AssetManager
   constructor:( stores )->
@@ -10,83 +11,74 @@ class AssetManager
   	@parsers = {}
   	@assetCache = {}
   	
+  	#extensions of code file names (do not need parsing)
+  	@codeExtensions = ["coffee","litcoffee","ultishape"]
+  
+      
+  _parseFileUri: ( fileUri )->
+    #extract store, file path etc
+    url = require('url')
+    pathInfo = url.parse( fileUri )
+    storeName = pathInfo.protocol
+    fileName = pathInfo.pathname
+    console.log("pathInfo",pathInfo)
+    
+    if storeName is null
+      if pathInfo.path[0] is "/"
+        #local fs
+        storeName = "local"
+        console.log "gne"
+      else
+        #TODO: deal with relative paths
+    
+      
+    return [ storeName, fileName ] 
+    
     
   addParser:( extension, parser )=>
     #add a parser
     @parsers[extension] = new parser()
   
   ###* 
-   * Storename : name of the store where to look for filename
-   * fileName : path to the file
-   * transient : boolean : if true, don't store the resource in cache
-   * caching params : various cachin params : lifespan etc
-  ###
-  loadResource: ( storeName, filename, transient, cachingParams )->
-    #load resource, store it in resource map, return it for use
-    console.log "resource map", @assetCache
-    if not (filename of @assetCache)
-      console.log("Resource NOT found")
-      extension = filename.split(".").pop()
-      
-      #console.log "parsers", @parsers, "extension", extension, "store",storeName
-      parser = @parsers[ extension ]
-      if not parser
-        throw new Error("No parser for #{extension}")
-      
-      store = @stores[ storeName ]
-      if not store
-        throw new Error("No store named #{store}")
-      
-      #console.log "store",store, "parser",parser.constructor
-      
-      rawData = store.loadFile(filename)
-      loadedResource = parser.parse(rawData)
-    
-      @assetCache[filename] = loadedResource
-    else
-      loadedResource = @assetCache[filename]
-      console.log("Resource found")
-      
-    return loadedResource
-
-
-  #TODO: this should be the standard, not the version above
-  ###* 
    * fileUri : path to the file, starting with the node prefix
    * transient : boolean : if true, don't store the resource in cache
    * caching params : various cachin params : lifespan etc
+   * If no store is specified, file paths are expected to be relative
   ###
-  loadResourceByUri: ( fileUri, transient, cachingParams  )->
+  loadResource: ( fileUri, transient, cachingParams  )->
     #load resource, store it in resource map, return it for use
-        
-    #extract store:
-    storeName = 
-    filePath = fileUri.split(":").pop()
+    transient = transient or false    
     
+    [storeName,filename] = @_parseFileUri( fileUri )
+    console.log("storeName",storeName,"filename",filename)
+    #extract store, file path etc
     if fileUri.indexOf(':') != -1
-        storeComponents = includeEntry.split(':')
-        store = storeComponents[0]
-        filePath = storeComponents[1]
+        fileUriElements = fileUri.split(':')
+        storeName = fileUriElements[0]
+        filename = fileUriElements[1]
     
     if not (filename of @assetCache)
       console.log("Resource NOT found")
       extension = filename.split(".").pop()
       
       #console.log "parsers", @parsers, "extension", extension, "store",storeName
-      parser = @parsers[ extension ]
-      if not parser
-        throw new Error("No parser for #{extension}")
       
       store = @stores[ storeName ]
       if not store
         throw new Error("No store named #{store}")
       
       #console.log "store",store, "parser",parser.constructor
+      #load raw data from file
+      loadedResource = store.loadFile(filename)
       
-      rawData = store.loadFile(filename)
-      loadedResource = parser.parse(rawData)
+      if extension not in @codeExtensions
+        parser = @parsers[ extension ]
+        if not parser
+          throw new Error("No parser for #{extension}")
+        loadedResource = parser.parse(loadedResource)
     
-      @assetCache[filename] = loadedResource
+      if not transient
+        @assetCache[filename] = loadedResource
     else
       loadedResource = @assetCache[filename]
       console.log("Resource found")
@@ -95,8 +87,8 @@ class AssetManager
 
   unLoadResource: ( store, filename )->
     #todo check references, lifecycle etc
-	  
-	  
+
+	
 module.exports = AssetManager
 
 
