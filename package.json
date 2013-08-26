@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "three": "0.58.9",
-    "esprima": ""
+    "esprima": "",
+    "q": "~0.9.6"
   },
   "devDependencies": {
     "jasmine-node": "1.10.2",
@@ -21,7 +22,8 @@
     "watchify": "0.1.0",
     "beefy": "",
     "github-autochangelog": "",
-    "browserify-shim": "~2.0.8"
+    "browserify-shim": "~2.0.8",
+    "xmlhttprequest": "~1.6.0"
   },
   "scripts": {
     "test": "jasmine-node --coffee specs/",

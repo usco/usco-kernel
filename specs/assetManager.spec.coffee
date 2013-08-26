@@ -7,6 +7,13 @@ AMFParser = require "./AMFParser"
 DummyStore = require "./dummyStore"
 DummyXHRStore = require "./dummyXHRStore"
 
+checkDeferred=(df,fn) ->
+    callback = jasmine.createSpy()
+    df.then(callback)
+    waitsFor -> callback.callCount > 0
+    
+    runs -> 
+      fn.apply @,callback.mostRecentCall.args if fn
 
 describe "AssetManager", ->
   assetManager = null
@@ -14,47 +21,96 @@ describe "AssetManager", ->
   
   beforeEach ->
     stores["dummy"] = new DummyStore()
+    stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
 
-  it 'caches resources by default',->
+  it 'can load resources from different stores',(done)->
     assetManager.addParser("stl", STLParser)
-    stlFileName = "dummy:specs/cube.stl"
-    
-    expect(assetManager.assetCache).toEqual({})
-    loadedResource = assetManager.loadResource( stlFileName )
-    expect(assetManager.assetCache).toEqual({"specs/cube.stl":loadedResource})
-    loadedResource = assetManager.loadResource( stlFileName )
-    expect(assetManager.assetCache).toEqual({"specs/cube.stl":loadedResource})
-
-  it 'does not cache transient resources',->
-    assetManager.addParser("stl", STLParser)
-    stlFileName = "dummy:specs/cube.stl"
-    
-    expect(assetManager.assetCache).toEqual({})
-    loadedResource = assetManager.loadResource( stlFileName, true )
-    expect(assetManager.assetCache).toEqual({})
-  
-  it 'can handle different stores',->
-    assetManager.addParser("stl", STLParser)
-    #assetManager.stores["XHR"] = new DummyXHRStore()
     
     fileUri = "dummy:specs/cube.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)
+
+    fileUri = "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)
+      done()
+    
     #fileUri = "/home/mmoisset/specs/cube.stl"
     #fileUri = "specs/cube.stl"
-    #fileUri = "https://github.com/kaosat-dev/repBug/blob/master/cad/stl/femur.stl"
-    assetManager.loadResource( fileUri )
+  
+  it 'should fail to load resources gracefully',(done)->
+    assetManager.addParser("stl", STLParser)
+    
+    fileUri = "https://not-a-real-url.com/femur.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)
+      done()
+  , 400
 
-### 
-  it 'can handle various file types via settable parsers',->
+  it 'caches resources by default',(done)->
+    assetManager.addParser("stl", STLParser)
+    stlFileName = "dummy:specs/cube.stl"
+    
+    expect(assetManager.assetCache).toEqual({})
+    
+    assetManager.loadResource( stlFileName ).done (loadedResource) =>
+      expect( assetManager.assetCache ).toEqual({"specs/cube.stl":loadedResource})
+      done()
+
+  it 'does not cache transient resources',(done)->
+    assetManager.addParser("stl", STLParser)
+    stlFileName = "dummy:specs/cube.stl"
+    
+    expect(assetManager.assetCache).toEqual({})
+    
+    assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
+      expect(assetManager.assetCache).toEqual({})
+      done()    
+
+  it 'can load source files (no parsing, raw text)',(done)->
+    fileName = "dummy:specs/test.coffee"
+    expSource = """cube1 = new Cube()
+    assembly.add( cube1 )
+    """
+    assetManager.loadResource( fileName, true ).done (loadedResource) =>
+      expect(loadedResource).toEqual(expSource)
+      done() 
+    
+    
+###
+  it 'can handle various file types via settable parsers',(done)->
     storeName = "dummy"
     
     assetManager.addParser("stl", STLParser)
     assetManager.addParser("amf", AMFParser)
     
-    stlFileName = "specs/cube.stl"
-    amfFileName = "specs/Constellation.amf"
+    stlFileName = "dummy:specs/cube.stl"
+    amfFileName = "dummy:specs/Constellation.amf"
     
-    #loadedResource = assetManager.loadResource( storeName, amfFileName )
-    loadedResource = assetManager.loadResource( storeName, stlFileName )
-    expect(loadedResource).toEqual("toto")
+    assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
+      expect(loadedResource).toEqual({})
+    
+    assetManager.loadResource( amfFileName, true ).done (loadedResource) =>
+      expect(loadedResource).toEqual({})
+      done()
+
+    
+
+  it 'bla', (done)->
+    Q = require("q")
+    bla = new DummyXHRStore()
+    fileUri = "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl"
+    #fileUri = "http://www.google.com"
+    
+    bla.loadFile( fileUri ).done ( loadedResource ) =>
+      console.log("prout loadedResource")#,loadedResource)
+      expect( loadedResource ).not.toEqual(null)
+      done()
+
+    checkDeferred Q.when(bla.loadFile( fileUri )), (loadedResource) =>
+      console.log("prout loadedResource",loadedResource)
+      expect( loadedResource ).not.toEqual(null)
+      
+  
 ###  

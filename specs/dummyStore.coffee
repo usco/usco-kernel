@@ -1,6 +1,10 @@
+Q = require("q")
+
 
 class DummyStore
   loadFile:( uri )=>
+    deferred = Q.defer()
+    
     fs = require('fs')
     
     stats = fs.lstatSync(uri)
@@ -8,7 +12,9 @@ class DummyStore
     
     data = fs.readFileSync( uri, 'utf8' )
     #console.log("data",data)
-    return data
+    deferred.resolve(data)
+    
+    return deferred.promise
 
 
 module.exports = DummyStore

@@ -1,5 +1,5 @@
 'use strict'
-
+Q = require("q")
 ###*
  *Manager for lifecyle of assets: load, store unload 
  *For external code files, stl, amf, textures, fonts etc
@@ -17,21 +17,24 @@ class AssetManager
       
   _parseFileUri: ( fileUri )->
     #extract store, file path etc
+    #console.log "extracting store from", fileUri
     url = require('url')
     pathInfo = url.parse( fileUri )
     storeName = pathInfo.protocol
-    fileName = pathInfo.pathname
-    console.log("pathInfo",pathInfo)
+    fileName = pathInfo.host  + pathInfo.pathname
+    #console.log("pathInfo",pathInfo)
+    storeName = storeName.replace(":","")
     
     if storeName is null
       if pathInfo.path[0] is "/"
         #local fs
         storeName = "local"
-        console.log "gne"
       else
         #TODO: deal with relative paths
+    else if storeName is "http" or storeName is "https"
+      storeName = "xhr"
+      fileName = pathInfo.protocol + "//"+ fileName
     
-      
     return [ storeName, fileName ] 
     
     
@@ -49,45 +52,54 @@ class AssetManager
     #load resource, store it in resource map, return it for use
     transient = transient or false    
     
+    deferred = Q.defer()
+    
     [storeName,filename] = @_parseFileUri( fileUri )
     console.log("storeName",storeName,"filename",filename)
-    #extract store, file path etc
-    if fileUri.indexOf(':') != -1
-        fileUriElements = fileUri.split(':')
-        storeName = fileUriElements[0]
-        filename = fileUriElements[1]
     
     if not (filename of @assetCache)
-      console.log("Resource NOT found")
       extension = filename.split(".").pop()
-      
       #console.log "parsers", @parsers, "extension", extension, "store",storeName
       
       store = @stores[ storeName ]
       if not store
-        throw new Error("No store named #{store}")
+        throw new Error("No store named #{storeName}")
       
       #console.log "store",store, "parser",parser.constructor
-      #load raw data from file
-      loadedResource = store.loadFile(filename)
+      #load raw data from file, get a deferred
       
-      if extension not in @codeExtensions
-        parser = @parsers[ extension ]
-        if not parser
-          throw new Error("No parser for #{extension}")
-        loadedResource = parser.parse(loadedResource)
-    
-      if not transient
-        @assetCache[filename] = loadedResource
+      #console.log("loading mah Resource", fileUri)
+      loaderDeferred = store.loadFile(filename)
+      #loadedResource 
+      loaderDeferred.then (loadedResource) =>
+        #console.log("ohh yeah got mah Resource", fileUri)
+        if extension not in @codeExtensions
+          parser = @parsers[ extension ]
+          if not parser
+            throw new Error("No parser for #{extension}")
+          loadedResource = parser.parse(loadedResource)
+          
+          #if we are meant to hold on to this resource, cache it
+          if not transient
+            @assetCache[filename] = loadedResource
+          
+          #and return it
+          deferred.resolve( loadedResource )  
+       .fail (error) =>
+         console.log("OH OH ")
+        
     else
+      #the resource was already loaded, return it 
       loadedResource = @assetCache[filename]
-      console.log("Resource found")
+      deferred.resolve( loadedResource )
       
-    return loadedResource
+    return deferred.promise
 
-  unLoadResource: ( store, filename )->
+  #remove resource from cached assets
+  unLoadResource: ( fileUri )->
     #todo check references, lifecycle etc
-
+    if fileUri of @assetCache
+      delete @assetCache[ fileUri ]
 	
 module.exports = AssetManager
 
