@@ -68,25 +68,25 @@ class AssetManager
       #console.log "store",store, "parser",parser.constructor
       #load raw data from file, get a deferred
       
-      #console.log("loading mah Resource", fileUri)
+      console.log("loading mah Resource", fileUri)
       loaderDeferred = store.loadFile(filename)
       #loadedResource 
       loaderDeferred.then (loadedResource) =>
-        #console.log("ohh yeah got mah Resource", fileUri)
+        console.log("ohh yeah got mah Resource", fileUri)
         if extension not in @codeExtensions
           parser = @parsers[ extension ]
           if not parser
             throw new Error("No parser for #{extension}")
           loadedResource = parser.parse(loadedResource)
+        #if we are meant to hold on to this resource, cache it
+        if not transient
+          @assetCache[filename] = loadedResource
           
-          #if we are meant to hold on to this resource, cache it
-          if not transient
-            @assetCache[filename] = loadedResource
-          
-          #and return it
-          deferred.resolve( loadedResource )  
+        #and return it
+        deferred.resolve( loadedResource )  
        .fail (error) =>
-         console.log("OH OH ")
+         deferred.reject( error )
+         
         
     else
       #the resource was already loaded, return it 

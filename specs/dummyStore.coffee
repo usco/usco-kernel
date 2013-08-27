@@ -1,18 +1,19 @@
 Q = require("q")
-
+fs = require('fs')
 
 class DummyStore
   loadFile:( uri )=>
     deferred = Q.defer()
     
-    fs = require('fs')
+    if not fs.existsSync( uri )
+      deferred.reject( "#{uri} not found" )
     
-    stats = fs.lstatSync(uri)
-    #console.log("stats", stats)
-    
-    data = fs.readFileSync( uri, 'utf8' )
-    #console.log("data",data)
-    deferred.resolve(data)
+    else
+      #stats = fs.lstatSync(uri)
+      #console.log("stats", stats)
+      data = fs.readFileSync( uri, 'utf8' )
+      #console.log("data",data)
+      deferred.resolve(data)
     
     return deferred.promise
 

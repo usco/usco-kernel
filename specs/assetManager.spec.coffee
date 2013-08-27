@@ -23,7 +23,16 @@ describe "AssetManager", ->
     stores["dummy"] = new DummyStore()
     stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
-
+  
+  it 'should fail to load resources gracefully',(done)->
+    assetManager.addParser("stl", STLParser)
+    
+    fileUri = "dummy:specs/femur.stl"
+    assetManager.loadResource( fileUri ).catch ( error ) =>
+      expect(error).toEqual("specs/femur.stl not found")
+      done()
+  , 400
+  
   it 'can load resources from different stores',(done)->
     assetManager.addParser("stl", STLParser)
     
@@ -38,15 +47,6 @@ describe "AssetManager", ->
     
     #fileUri = "/home/mmoisset/specs/cube.stl"
     #fileUri = "specs/cube.stl"
-  
-  it 'should fail to load resources gracefully',(done)->
-    assetManager.addParser("stl", STLParser)
-    
-    fileUri = "https://not-a-real-url.com/femur.stl"
-    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
-      expect( loadedResource ).not.toEqual(null)
-      done()
-  , 400
 
   it 'caches resources by default',(done)->
     assetManager.addParser("stl", STLParser)
@@ -67,16 +67,13 @@ describe "AssetManager", ->
     assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
       expect(assetManager.assetCache).toEqual({})
       done()    
-
+  
   it 'can load source files (no parsing, raw text)',(done)->
     fileName = "dummy:specs/test.coffee"
-    expSource = """cube1 = new Cube()
-    assembly.add( cube1 )
-    """
+    expSource = """assembly.add( new Cube() )"""
     assetManager.loadResource( fileName, true ).done (loadedResource) =>
       expect(loadedResource).toEqual(expSource)
-      done() 
-    
+      done()
     
 ###
   it 'can handle various file types via settable parsers',(done)->
