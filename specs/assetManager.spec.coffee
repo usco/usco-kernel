@@ -36,7 +36,7 @@ describe "AssetManager", ->
   it 'can load resources from different stores',(done)->
     assetManager.addParser("stl", STLParser)
     
-    fileUri = "dummy:specs/cube.stl"
+    fileUri = "dummy:specs/data/cube.stl"
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
 
@@ -50,17 +50,17 @@ describe "AssetManager", ->
 
   it 'caches resources by default',(done)->
     assetManager.addParser("stl", STLParser)
-    stlFileName = "dummy:specs/cube.stl"
+    stlFileName = "dummy:specs/data/cube.stl"
     
     expect(assetManager.assetCache).toEqual({})
     
     assetManager.loadResource( stlFileName ).done (loadedResource) =>
-      expect( assetManager.assetCache ).toEqual({"specs/cube.stl":loadedResource})
+      expect( assetManager.assetCache ).toEqual({"dummy:specs/data/cube.stl":loadedResource})
       done()
 
   it 'does not cache transient resources',(done)->
     assetManager.addParser("stl", STLParser)
-    stlFileName = "dummy:specs/cube.stl"
+    stlFileName = "dummy:specs/data/cube.stl"
     
     expect(assetManager.assetCache).toEqual({})
     
@@ -69,11 +69,22 @@ describe "AssetManager", ->
       done()    
   
   it 'can load source files (no parsing, raw text)',(done)->
-    fileName = "dummy:specs/test.coffee"
+    fileName = "dummy:specs/data/test.coffee"
     expSource = """assembly.add( new Cube() )"""
     assetManager.loadResource( fileName, true ).done (loadedResource) =>
       expect(loadedResource).toEqual(expSource)
       done()
+  
+  it 'allows for manual unloading of resources', (done)->
+    assetManager.addParser("stl", STLParser)
+    stlFileName = "dummy:specs/data/cube.stl"
+    
+    assetManager.loadResource( stlFileName ).done (loadedResource) =>
+      expect( assetManager.assetCache ).toEqual({"dummy:specs/data/cube.stl":loadedResource})
+      assetManager.unLoadResource( stlFileName )
+      expect(assetManager.assetCache).toEqual({})
+      done()   
+    
     
 ###
   it 'can handle various file types via settable parsers',(done)->
@@ -82,8 +93,8 @@ describe "AssetManager", ->
     assetManager.addParser("stl", STLParser)
     assetManager.addParser("amf", AMFParser)
     
-    stlFileName = "dummy:specs/cube.stl"
-    amfFileName = "dummy:specs/Constellation.amf"
+    stlFileName = "dummy:specs/data/cube.stl"
+    amfFileName = "dummy:specs/data/Constellation.amf"
     
     assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
       expect(loadedResource).toEqual({})
