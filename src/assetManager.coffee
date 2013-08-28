@@ -16,6 +16,8 @@ class AssetManager
   	@codeExtensions = ["coffee","litcoffee","ultishape"]
   	
   	#for relative paths: needs full uri (store included)
+  	#TODO: maybe this is not needed, full paths should be resolved else
+  	#where BEFORE asking the asset manager to load anything
   	@currentLocation = ""
       
   _parseFileUri: ( fileUri )->
@@ -101,3 +103,21 @@ class AssetManager
       delete @assetCache[ fileUri ]
 	
 module.exports = AssetManager
+
+
+#old code for fetching local files
+### 
+  _localSourceFetchHandler:([store,project,path,deferred])=>
+    #console.log "handler recieved #{store}/#{project}/#{path}"
+    result = ""
+    if not project? and path?
+      if @debug
+        console.log "will fetch #{path} from local (current project) namespace"
+      shortName = path
+      file = @project.rootFolder.get(shortName)
+      result = file.content
+      result = "\n#{result}\n"
+      deferred.resolve(result)
+    else if project? and path?
+      throw new Error("non prefixed includes can only get files from current project")
+###

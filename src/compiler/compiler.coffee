@@ -57,8 +57,6 @@ class Compiler
         @compileResultData["errors"] = errors
         @project.trigger("compile:error",@compileResultData)
      
-
-#
   _processScript: ( source )=>
     deferred = $.Deferred()
     

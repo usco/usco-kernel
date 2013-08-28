@@ -1,5 +1,5 @@
 #CoffeeScript = require 'CoffeeScript'
-#geometryKernel = require './geometry/api'
+shapesKernel = require '../shapes/api'
 
    
 class Processor
@@ -44,7 +44,6 @@ class Processor
 
     assembly = new THREE.Object3D()
     
-
     #clear log entries
     log = {}
     log.entries = []

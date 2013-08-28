@@ -1,5 +1,8 @@
 'use strict'
 
+#require "esprima"
+#require "esmorph"
+#require "escodegen"
 
 class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
@@ -11,32 +14,35 @@ class PreProcessor
     
     @resolvedIncludes = []
     @unresolvedIncludes = []
-  
-  _localSourceFetchHandler:([store,project,path,deferred])=>
-    #console.log "handler recieved #{store}/#{project}/#{path}"
-    result = ""
-    if not project? and path?
-      if @debug
-        console.log "will fetch #{path} from local (current project) namespace"
-      shortName = path
-      file = @project.rootFolder.get(shortName)
-      result = file.content
-      result = "\n#{result}\n"
-      deferred.resolve(result)
-    else if project? and path?
-      throw new Error("non prefixed includes can only get files from current project")
     
-  process:(project, coffeeToJs, lint)=>
-    coffeeToJs = coffeeToJs or false
+  process: ( source )=>
     @resolvedIncludes = []
     @resolvedIncludesFull = []
     @unresolvedIncludes = []
     
     @deferred = $.Deferred()
-    try
-      #if lint
-      #  @lintProject(project)
+    $.when.apply($, @patternReplacers).done ()=>
+      if coffeeToJs
+        @processedResult = CoffeeScript.compile(@processedResult, {bare: true})
       
+      @processedResult = @_findParams(@processedResult) # just a test
+      #console.log "@processedResult",@processedResult
+      @deferred.resolve(@processedResult)
+    
+    return @deferred.promise()
+    
+  process_old:(project, coffeeToJs)=>
+    coffeeToJs = coffeeToJs or false
+    
+    @resolvedIncludes = []
+    @resolvedIncludesFull = []
+    @unresolvedIncludes = []
+    
+    @deferred = $.Deferred()
+    
+    ###
+    TODO: checking for main file etc should not be the responsibility of the pre processor
+    try
       @project = project
       mainFileName = @project.name+".coffee"
       mainFile = @project.rootFolder.get(mainFileName)
@@ -54,6 +60,7 @@ class PreProcessor
       @processIncludes(mainFileName, mainFileCode)
     catch error
       @deferred.reject(error)
+    ###
     
     $.when.apply($, @patternReplacers).done ()=>
       if coffeeToJs
@@ -65,53 +72,6 @@ class PreProcessor
     
     return @deferred.promise()
   
-  ###* 
-  * Find any parameters given to the script
-  ###
-  _findParams:(source)=>
-    source = source or ""
-    
-    buf = ""
-    openBrackets = 0
-    closeBrackets = 0
-    startMark = null
-    endMark = null
-    for char,index in source
-      buf+=char
-      
-      if buf.indexOf("params=") != -1 or buf.indexOf("params =") != -1#"para" in buf
-        console.log "found params at",index
-        startMark = index
-        buf = ""
-      
-      if startMark != null
-        if buf.indexOf("{") != -1 
-          openBrackets += 1
-          buf = ""
-        if buf.indexOf("}") != -1 
-          closeBrackets += 1
-          buf = ""
-        if openBrackets == closeBrackets and openBrackets != 0
-          endMark = index
-          break
-          
-    if not @project.meta?
-      @project.meta = {}  
-    
-    if startMark != null
-      paramsSourceBlock = "params " + source.slice(startMark,endMark+1)
-      params = eval(paramsSourceBlock)
-      
-      results = {}
-      for param in params.fields
-        results[param.name]=param.default
-      source = source.replace(paramsSourceBlock, "")
-      @project.meta.params = results
-      
-      rawParams = eval(paramsSourceBlock)
-      @project.meta.rawParams = rawParams
-     
-    return source      
   
   _findMatches:(source)=>
     source = source or ""
@@ -132,9 +92,9 @@ class PreProcessor
     #STEP 1 : list all imports
     #STEP 2 : check if any import has already been cached
     #STEP 3: check if any cached data needs refreshing
-    
-    shapeImports = findImports( source );
-  
+    findGeomImports= (source) =>
+      
+    geomImports = findGeomImports( source );
   
   
   ###* 

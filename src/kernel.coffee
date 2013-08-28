@@ -1,8 +1,8 @@
 'use strict'
 
-AssetManager = require( "./assetManager")
-GeometryManager = require( "./geometryManager")
-Compiler = require( "./compiler/compiler")
+AssetManager = require "./assetManager"
+GeometryManager = require "./geometryManager"
+Compiler = require "./compiler/compiler"
 
 class Kernel
   constructor:(options)->
@@ -38,7 +38,6 @@ class Kernel
   #slicing management
   setSlicer:( slicer )->
     @slicer = slicer
-
 
 
 module.exports = Kernel

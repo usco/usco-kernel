@@ -44,9 +44,6 @@ describe "AssetManager", ->
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
       done()
-    
-    #fileUri = "/home/mmoisset/specs/cube.stl"
-    #fileUri = "specs/cube.stl"
 
   it 'caches resources by default',(done)->
     assetManager.addParser("stl", STLParser)

@@ -118,6 +118,9 @@ class Project extends Backbone.Model
     @rootAssembly = {}
     @dataStore = null
     
+    #
+    @fileNames = []
+    
     @on("change:name", @_onNameChanged)
     @on("compiled",@_onCompiled)
     @on("compile:error",@_onCompileError)

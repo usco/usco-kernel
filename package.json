@@ -12,7 +12,9 @@
   "dependencies": {
     "three": "0.58.9",
     "esprima": "",
-    "q": "~0.9.6"
+    "q": "~0.9.6",
+    "esmorph": "0.0.1",
+    "escodegen": "0.0.26"
   },
   "devDependencies": {
     "jasmine-node": "1.10.2",
@@ -23,10 +25,12 @@
     "beefy": "",
     "github-autochangelog": "",
     "browserify-shim": "~2.0.8",
-    "xmlhttprequest": "~1.6.0"
+    "xmlhttprequest": "~1.6.0",
+    "uglify-js": "~2.4.0"
   },
   "scripts": {
     "test": "jasmine-node --coffee specs/",
-    "start": "beefy --live src/kernel.coffee:coffeescad-kernel 9080 -- --extension '.coffee' -t coffeeify & watchify src/kernel.js -o coffeescad-kernel.js -t coffeeify-redux --extension '.coffee' & jasmine-node specs/ --coffee --autotest --watch src"
+    "start": "beefy --live src/kernel.coffee:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify & jasmine-node specs/ --coffee --autotest --watch src",
+    "release": "browserify src/kernel.coffee -t coffeeify --extension '.coffee' | uglifyjs -c > bundle.js"
   }
 }
