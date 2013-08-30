@@ -1,8 +1,6 @@
 'use strict'
 
-#require "esprima"
-#require "esmorph"
-#require "escodegen"
+
 
 class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html

@@ -166,10 +166,6 @@ THREE.STLParser.prototype.ensureBinary = function (buf) {
 
 };
 
-
-console.log("\nGLOBAL:");
-console.log(global.DataView);
-
 if ( typeof DataView === 'undefined'){
 
 	DataView = function(buffer, byteOffset, byteLength){
@@ -342,9 +338,5 @@ if ( typeof DataView === 'undefined'){
 
 	 };
 
-}
-else
-{
-	console.log("dataview exists")
 }
 module.exports = THREE.STLParser;

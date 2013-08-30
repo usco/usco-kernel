@@ -35,5 +35,5 @@ Sphere = require "./3d/Sphere"
 #Circle = require "./2d/Circle"
 #Text = require "./2d/Text"
 
-module.exports = {"Cube":Cube,"Sphere":Sphere}
+module.exports = {ObjectBase:ObjectBase, "Cube":Cube,"Sphere":Sphere}
 #module.exports = {ObjectBase:ObjectBase, Cube:Cube, Sphere:Sphere, Cylinder:Cylinder, Circle:Circle, Rectangle:Rectangle, Text: Text}
