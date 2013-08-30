@@ -1,25 +1,32 @@
-#CoffeeScript = require 'CoffeeScript'
+CoffeeScript =  require('coffee-script-redux')
+Q = require("q")
+
 shapesKernel = require '../shapes/api'
 
-   
+
 class Processor
   #processes a csg script
   construtor:()->
     @async = false
-    @debug = false
     
-  processScript:(script, async=false, params, callback)-> 
+  processScript:(script, async=false, params)-> 
     @script = script
     @async = async
-    @params = params      
-    @callback = callback
-    @rebuildSolid()
+    @params = params  
     
-  rebuildSolid:() =>
+    @deferred = Q.defer()    
+    
+    @generateAssembly()
+    return @deferred.promise
+
+    
+  generateAssembly:() =>
     @processing = true
     try
       @_prepareScriptSync()
-      @parseScriptSync(@script, @params)
+      rootAssembly = @evaluateScriptSync(@script, @params)
+      console.log "gna", rootAssembly
+      @deferred.resolve( rootAssembly )
       @processing = false
     catch error
       #correct the line number to account for all the pre-injected code
@@ -30,55 +37,54 @@ class Processor
           lineOffset = -15
         error.location.first_line = (error.location.first_line + lineOffset)
     
-      #console.log "raw error", error
-      #console.log error.stack
-      #trace = printStackTrace({e: error})
-      #console.log trace
-      @callback(null,null,null, error)
+      @deferred.reject( error )
       @processing = false
  
   _prepareScriptSync:()=>
     #prepare the source for compiling : convert to coffeescript, inject dependencies etc
     @script = """
-    {ObjectBase, Cube, Sphere, Cylinder, Circle, Rectangle, Text}=geometryKernel
+{Cube}=geometryKernel
 
-    assembly = new THREE.Object3D()
-    
-    #clear log entries
-    log = {}
-    log.entries = []
-    #clear rootAssembly
-    #rootAssembly.clear()
-    
-    classRegistry = {}
-    
-    #include script
-    #{@script}
-    
-    rootAssembly = assembly
-    
-    #return results as an object for cleaness
-    return result = {"rootAssembly":rootAssembly,"partRegistry":classRegistry, "logEntries":log.entries}
-    
+assembly = new THREE.Object3D()
+
+#include script
+#{@script}
+
+
+#return results as an object for cleaness
+result = {rootAssembly:assembly};
+return result
     """
-    @script = CoffeeScript.compile(@script, {bare: true})
+    
+    #Coffeescript redux
+    parsed = CoffeeScript.parse(@script, {
+     # optimise: false,
+      raw: true
+    })
+    ast = CoffeeScript.compile(parsed,{bare:true})
+    js = CoffeeScript.js(ast)
+    #@script = CoffeeScript.compile(@script, {bare: true})
     #console.log "JSIFIED script"
-    #console.log @script
+    #console.log js
+    @script = js
   
   
-  parseScriptSync: (script, params) -> 
+  evaluateScriptSync: (script, params) -> 
     #Parse the given coffeescad script in the UI thread (blocking but simple)
     workerscript = script
     if @debug
       workerscript += "//Debugging;\n"
       workerscript += "debugger;\n"
     
+    #YYYUUUCK!!!
+    THREE = require( 'three' )
     rootAssembly = new THREE.Object3D()
     f = new Function("geometryKernel", workerscript)
-    result = f(geometryKernel)
-    {rootAssembly,partRegistry,logEntries} = result
+    result = f(shapesKernel)
+    {rootAssembly} = result
     
     console.log "compile result", result
-    @callback(rootAssembly,partRegistry,logEntries)
+    #@callback(rootAssembly,partRegistry,logEntries)
+    return rootAssembly
     
 module.exports = Processor
