@@ -18,6 +18,12 @@ class ObjectBase extends THREE.Mesh
     #super(geometry, material)
     THREE.Mesh.call( @, geometry, material )
     
+    
+    #VERY important : transforms stack : all operations done on this shape is stored here
+    #TODO: should we be explicit , ie in basic shape class, or do it in processor/preprocessor
+    @transforms = []
+    
+    
     #FIXME: see THREE.jS constructors thingamajig
     #console.log @prototype
     #Object.create(@prototype)

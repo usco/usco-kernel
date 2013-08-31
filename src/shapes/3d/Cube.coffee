@@ -16,7 +16,7 @@ class Cube extends ObjectBase
   #     })
   constructor:(options)->
     options = options or {}
-    defaults = {size:[1,1,1],center:[0,0,0],r:0,$fn:0}
+    defaults = { size:[1,1,1], center:[0,0,0], r:0, $fn:0}
     
     size = utils.parseOptionAs3DVector(options, "size", defaults["size"])
     center = utils.parseCenter(options,"center",size.divideScalar(2),defaults["center"], THREE.Vector3)

@@ -52,6 +52,27 @@ parseOptionAs3DVector = (options, optionname, defaultValue, defaultValue2) ->
   else
     result = new THREE.Vector3(result, result, result)
   result
+  
+parseParamAs3dVector = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = new THREE.Vector3()
+    result = defaultValue
+  
+  if result instanceof Array
+    if result.length == 3
+      result = new THREE.Vector3(result[0], result[1], result[2])
+    else if result.length == 2
+      result = new THREE.Vector3(result[0], result[1], 1)
+    else if result.length == 1
+      result = new THREE.Vector3(result[0], 1, 1)
+  else if result instanceof THREE.Vector3
+    result = result
+  else
+    result = new THREE.Vector3(result, result, result)
+  result
 
 parseOptionAs2DVector = (options, optionname, defaultValue, defaultValue2) ->
   # Parse an option and force into a THREE.Vector2. If a scalar is passed it is converted
@@ -758,6 +779,11 @@ module.exports.parseOptionAsInt = parseOptionAsInt
 module.exports.parseOptionAsInt = parseOptionAsBool
 module.exports.parseOptionAsLocations = parseOptionAsLocations
 module.exports.parseCenter = parseCenter
+
+#added
+module.exports.parseParamAs3dVector = parseParamAs3dVector
+
+
 
 #needed ??
 module.exports.insertSorted = insertSorted
