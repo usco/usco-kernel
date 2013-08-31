@@ -12,6 +12,7 @@ THREE = require 'three'
 
 shapesKernel = require '../shapes/api'
 
+#TODO: add handling of simple "sub" script/ shape script, (without root assembly etc)
 
 class Processor
   #processes a csg script
@@ -118,13 +119,6 @@ class Processor
           """
       else
         ""
-    ### 
-    var meta = {
-          lineNumber: #{fn.line}, 
-          range: [ #{fn.range[0]}, #{fn.range[1]}]
-          }
-          console.log("meta", meta);
-    ###
   
     @script = esmorph.modify(@script, tracer)
     #console.log("Raw esmorph code", code)
@@ -145,6 +139,7 @@ class Processor
     if @debug
       workerscript += "//Debugging;\n"
       workerscript += "debugger;\n"
+      
     #YYYUUUCK!!!
     assembly = new THREE.Object3D()
     
@@ -152,8 +147,17 @@ class Processor
     result = f(shapesKernel,assembly)
     {rootAssembly} = result
     
+    #{rootAssembly,partRegistry,logEntries} = result
+    
     logger.debug "compile result"+ result
     #@callback(rootAssembly,partRegistry,logEntries)
     return rootAssembly
+  
+  ###* 
+  *Experimental find transformation stack of each shape: not sure this should be here!!
+  *
+  ###
+  _findShapeInstanceTransforms: ( shape )->
     
+  
 module.exports = Processor

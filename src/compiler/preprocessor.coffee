@@ -1,5 +1,6 @@
 'use strict'
 
+graphDiff = require('graph-difference')
 
 
 class PreProcessor
