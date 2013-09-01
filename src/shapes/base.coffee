@@ -31,6 +31,28 @@ class ObjectBase extends THREE.Mesh
     
     @connectors = []
   
+  #------base transforms--------#
+  translate:( amount )->
+    tVector = toVector3( amount )
+    
+    #TODO: work around these, for more efficiency)
+    @translateX( tVector.x )
+    @translateY( tVector.y )
+    @translateZ( tVector.z )
+    
+    #TODO: add actual data structures for this
+    @transforms.push( "T:"+tVector )
+    
+  rotate:( amount )->
+    rVector = toVector3( amount )
+    euler = new THREE.Euler( rVector.x, rVector.y, rVector.z)
+    
+    @setRotationFromEuler( euler )
+    
+    #TODO: add actual data structures for this
+    @transforms.push( "R:"+rVector )
+  
+  #------retro compatibility------#
   color:(rgba)->
     @material.color = rgba
     

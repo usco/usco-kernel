@@ -14,7 +14,7 @@ translate = ( amount, objects...)->
   amount = toVector3( amount )
   
   for object in objects
-    object.translate()
+    object.translate( amount )
 
 ###* 
 * rotate object(s) by amount
@@ -27,7 +27,7 @@ rotate = ( amount, objects...)->
   amount = toVector3( amount )
   
   for object in objects
-    object.rotate()
+    object.rotate( amount )
 
 
 ###* 
@@ -36,12 +36,13 @@ rotate = ( amount, objects...)->
 * actual transformation is computed based on raw value of amount
 * @param {object, array} objects:  one ore more objects to rotate
 * scale order : x,y,z
+* #TODO: scale is a bit different from the other transforms as it transforms the geometry , not just the assembly node
 ###
 scale = ( amount, objects...)->
   amount = toVector3( amount )
   
   for object in objects
-    object.rotate()
+    object.rotate( amount )
 
 ###* 
 * mirror object(s) using given direction vector
@@ -54,7 +55,7 @@ mirror = ( amount, objects...)->
   amount = toVector3( amount )
   
   for object in objects
-    object.mirror()
+    object.mirror( amount )
 
 module.exports.translate = tanslate
 module.exports.rotate = rotate
