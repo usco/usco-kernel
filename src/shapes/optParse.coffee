@@ -1,5 +1,6 @@
-    
-  
+'use strict'
+THREE = require( 'three' )
+ 
 parseOptions = (options, defaults)->
   if  Object.getPrototypeOf( options ) == Object.prototype
     options = merge defaults, options
@@ -72,6 +73,25 @@ parseParamAs3dVector = (param, defaultValue) ->
     result = result
   else
     result = new THREE.Vector3(result, result, result)
+  result
+  
+parseParamAs2dVector = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = new THREE.Vector2()
+    result = defaultValue
+  
+  if result instanceof Array
+    if result.length == 2
+      result = new THREE.Vector2(result[0], result[1])
+    else if result.length == 1
+      result = new THREE.Vector2(result[0], 1)
+  else if result instanceof THREE.Vector2
+    result = result
+  else
+    result = new THREE.Vector2(result, result)
   result
 
 parseOptionAs2DVector = (options, optionname, defaultValue, defaultValue2) ->

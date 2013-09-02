@@ -1,7 +1,7 @@
 use 'strict'
 
-utils = require './utils'
-toVector3 = utils.parseParamAs3dVector
+optParse = require './optParse'
+toVector3 = optParse.parseParamAs3dVector
 
 ###* 
 * translate object(s) by amount
