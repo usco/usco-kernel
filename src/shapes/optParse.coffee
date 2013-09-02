@@ -33,7 +33,7 @@ parseOptionAs3DVector = (options, optionname, defaultValue, defaultValue2) ->
   # into a vector with equal x,y,z, if a boolean is passed and is true, take defaultvalue, otherwise defaultvalue2
   if optionname of options
     if options[optionname] == false or options[optionname] == true
-      doCenter = parseOptionAsBool(options,optionname,false)  
+      doCenter = parseOptionAsBool(options,optionname, false)  
       if doCenter
         options[optionname]=defaultValue
       else
@@ -176,13 +176,20 @@ parseOptionAsLocations = (options, optionName, defaultValue) ->
   stuff.toString(2)
   
 parseCenter = (options, optionname, defaultValue, defaultValue2, vectorClass) ->
-  # Parse a "center" option and force into a THREE.Vector3. If a scalar is passed it is converted
+  # Parse a "center" option and force into a THREE.Vector3/THREE.Vector2. If a scalar is passed it is converted
   # into a vector with equal x,y,z, if a boolean is passed and is true, take defaultvalue, otherwise defaultvalue2
+  #if defaultValue
+  
+  if vectorClass == THREE.Vector3
+    defaultValue = parseParamAs3dVector(defaultValue)
+    defaultValue2 = parseParamAs3dVector(defaultValue2)
+  
   if optionname of options
     centerOption = options[optionname]
     if centerOption instanceof Array
-      newDefaultValue = new vectorClass(defaultValue)
-      newDefaultValue2 = new vectorClass(defaultValue2)
+      
+      newDefaultValue = new vectorClass(defaultValue.x, defaultValue.y, defaultValue.z)
+      newDefaultValue2 = new vectorClass(defaultValue2.x, defaultValue2.y, defaultValue2.z)
       for component, index  in centerOption
         if typeof component is 'boolean'
           if index is 0 
@@ -200,6 +207,7 @@ parseCenter = (options, optionname, defaultValue, defaultValue2, vectorClass) ->
         else
           options[optionname]=defaultValue
   
+  console.log "default",defaultValue,"default2",defaultValue2
   result = parseOption(options, optionname, defaultValue)
   result = new vectorClass(result)
   result
@@ -796,13 +804,13 @@ module.exports.parseOptionAs3DVector = parseOptionAs3DVector
 module.exports.parseOptionAs2DVector = parseOptionAs2DVector
 module.exports.parseOptionAsFloat = parseOptionAsFloat
 module.exports.parseOptionAsInt = parseOptionAsInt
-module.exports.parseOptionAsInt = parseOptionAsBool
+module.exports.parseOptionAsBool = parseOptionAsBool
 module.exports.parseOptionAsLocations = parseOptionAsLocations
 module.exports.parseCenter = parseCenter
 
 #added
 module.exports.parseParamAs3dVector = parseParamAs3dVector
-
+module.exports.parseParamAs2dVector = parseParamAs2dVector
 
 
 #needed ??

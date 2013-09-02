@@ -42,12 +42,11 @@ describe "parse param to 2d vector", ->
   it 'defaults to a 2d vector with all components set to 0', ->
     param = null
     vec2 = toVec2( param )
-    #expect( vec2 ).toEqual( new THREE.Vector2( 0,0 ) )
+    expect( vec2 ).toEqual( new THREE.Vector2( 0,0 ) )
   
-  ###
   it 'can set the 2d vector using a default value', ->
     param = null 
-    vec3 = toVec2( param , new THREE.Vector2( 1,15) )
+    vec2 = toVec2( param , new THREE.Vector2(1,15) )
     expect( vec2 ).toEqual( new THREE.Vector2( 1,15 ) )
   
   it 'can parse arrays of length 2 to 2d vector', ->
@@ -64,26 +63,53 @@ describe "parse param to 2d vector", ->
     param = 15
     vec2 = toVec2( param )
     expect( vec2 ).toEqual( new THREE.Vector2( 15,15 ) )
-  ###
-### 
-describe "Options parsing utilities", ->
   
-  beforeEach ->
+
+describe "Various option parsing utilities", ->
+  optToFloat = optParse.parseOptionAsFloat
+  optToInt = optParse.parseOptionAsInt
+  optToBool = optParse.parseOptionAsBool
+  
+  optToVec3 = optParse.parseOptionAs3DVector
+  optToVec2 = optParse.parseOptionAs2DVector
+
+  it 'can parse options to integers', ->
+    options = {"boolTest":"true"}
+    obsValue = optToBool( options,"boolTest" )
+    expValue = true
+    expect( obsValue ).toEqual( expValue )
+    
+  it 'can parse options to booleans', ->
+    options = {"boolTest":"true"}
+    obsValue = optToBool( options,"boolTest" )
+    expValue = true
+    expect( obsValue ).toEqual( expValue )
+    
+    options = {"boolTest":"false"}
+    obsValue = optToBool( options,"boolTest" )
+    expValue = false
+    expect( obsValue ).toEqual( expValue )
+    
+
+describe "Center option parsing utilities", ->
+  parseCenter = optParse.parseCenter
+  
   
   it 'has a centerParser, no input (should default to false)', ->
     options = {}
-    size = new THREE.Vector3(10)
-    parsed = utils.parseCenter(options,"center",size.dividedBy(2), [0,0,0], THREE.Vector3)
+    size = new THREE.Vector3(10,10,10)
+    parsed = parseCenter(options,"center",size.divideScalar(2), [0,0,0], THREE.Vector3)
     expCenter = new THREE.Vector3(5,5,5)
     expect(parsed).toEqual(expCenter)
   
-  it 'has a centerParser, vector input', ->
+  it 'has a centerParser,array input', ->
     options = {"center":[0,0,5]}
     size = new THREE.Vector3(10)
-    parsed = utils.parseCenter(options,"center",size.dividedBy(2), [0,0,0], THREE.Vector3)
+    parsed = parseCenter(options,"center",size.divideScalar(2), [0,0,0], THREE.Vector3)
     expCenter = new THREE.Vector3(0,0,5)
     expect(parsed).toEqual(expCenter)
-  
+
+###  
   it 'has a centerParser, single boolean, false', ->
     options = {"center":false}
     size = new THREE.Vector3(10)
