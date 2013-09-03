@@ -1,5 +1,97 @@
 'use strict'
 THREE = require( 'three' )
+
+#params parsing
+
+toVector3 = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = new THREE.Vector3()
+    result = defaultValue
+  
+  if result instanceof Array
+    if result.length == 3
+      result = new THREE.Vector3(result[0], result[1], result[2])
+    else if result.length == 2
+      result = new THREE.Vector3(result[0], result[1], 1)
+    else if result.length == 1
+      result = new THREE.Vector3(result[0], 1, 1)
+  else if result instanceof THREE.Vector3
+    result = result
+  else
+    result = new THREE.Vector3(result, result, result)
+  result
+  
+toVector2 = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = new THREE.Vector2()
+    result = defaultValue
+  
+  if result instanceof Array
+    if result.length == 2
+      result = new THREE.Vector2(result[0], result[1])
+    else if result.length == 1
+      result = new THREE.Vector2(result[0], 1)
+  else if result instanceof THREE.Vector2
+    result = result
+  else
+    result = new THREE.Vector2(result, result)
+  result
+  
+
+toInt = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = 0
+    result = defaultValue
+  
+  if typeof (result) is "string"
+    result = Number(result)
+  else
+    throw new Error("Parameter " + optionname + " should be a number")  unless typeof (result) is "number"
+    
+  Number Math.floor(result)
+
+
+toFloat = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = 0
+    result = defaultValue
+  
+  if typeof (result) is "string"
+    result = Number(result)
+  else
+    throw new Error("Parameter " + optionname + " should be a number")  unless typeof (result) is "number"
+    
+  result
+
+toBool = (param, defaultValue) ->
+  result = param
+  
+  if not param?
+    if not defaultValue?
+      defaultValue = false
+    result = defaultValue
+    
+  if typeof (result) is "string"
+    result = true  if result is "true"
+    result = false  if result is "false"
+    result = false  if result is 0
+  result = !!result
+  result
+
+
+#options parsing
  
 parseOptions = (options, defaults)->
   if  Object.getPrototypeOf( options ) == Object.prototype
@@ -28,6 +120,14 @@ parseOption = (options, optionname, defaultvalue) ->
   result = options[optionname]  if optionname of options  if options
   result
 
+parseOption2 = (options, optionname, defaultvalue) ->
+  # Parse an option from the options object
+  # If the option is not present, return the default value
+  result = defaultvalue
+  result = options[optionname]  if optionname of options  if options
+  result
+
+
 parseOptionAs3DVector = (options, optionname, defaultValue, defaultValue2) ->
   # Parse an option and force into a THREE.Vector3. If a scalar is passed it is converted
   # into a vector with equal x,y,z, if a boolean is passed and is true, take defaultvalue, otherwise defaultvalue2
@@ -52,46 +152,6 @@ parseOptionAs3DVector = (options, optionname, defaultValue, defaultValue2) ->
     result = result
   else
     result = new THREE.Vector3(result, result, result)
-  result
-  
-parseParamAs3dVector = (param, defaultValue) ->
-  result = param
-  
-  if not param?
-    if not defaultValue?
-      defaultValue = new THREE.Vector3()
-    result = defaultValue
-  
-  if result instanceof Array
-    if result.length == 3
-      result = new THREE.Vector3(result[0], result[1], result[2])
-    else if result.length == 2
-      result = new THREE.Vector3(result[0], result[1], 1)
-    else if result.length == 1
-      result = new THREE.Vector3(result[0], 1, 1)
-  else if result instanceof THREE.Vector3
-    result = result
-  else
-    result = new THREE.Vector3(result, result, result)
-  result
-  
-parseParamAs2dVector = (param, defaultValue) ->
-  result = param
-  
-  if not param?
-    if not defaultValue?
-      defaultValue = new THREE.Vector2()
-    result = defaultValue
-  
-  if result instanceof Array
-    if result.length == 2
-      result = new THREE.Vector2(result[0], result[1])
-    else if result.length == 1
-      result = new THREE.Vector2(result[0], 1)
-  else if result instanceof THREE.Vector2
-    result = result
-  else
-    result = new THREE.Vector2(result, result)
   result
 
 parseOptionAs2DVector = (options, optionname, defaultValue, defaultValue2) ->
@@ -181,23 +241,30 @@ parseCenter = (options, optionname, defaultValue, defaultValue2, vectorClass) ->
   #if defaultValue
   
   if vectorClass == THREE.Vector3
-    defaultValue = parseParamAs3dVector(defaultValue)
-    defaultValue2 = parseParamAs3dVector(defaultValue2)
+    defaultValue = toVector3(defaultValue)
+    defaultValue2 = toVector3(defaultValue2)
   
   if optionname of options
     centerOption = options[optionname]
     if centerOption instanceof Array
       
-      newDefaultValue = new vectorClass(defaultValue.x, defaultValue.y, defaultValue.z)
-      newDefaultValue2 = new vectorClass(defaultValue2.x, defaultValue2.y, defaultValue2.z)
+      newDefaultValue = defaultValue #new vectorClass(defaultValue.x, defaultValue.y, defaultValue.z)
+      newDefaultValue2 = defaultValue2# new vectorClass(defaultValue2.x, defaultValue2.y, defaultValue2.z)
+      result = new THREE.Vector3()
+      
       for component, index  in centerOption
         if typeof component is 'boolean'
+          #takes in order: defaultValue2.x , defaultValue.x, current value
           if index is 0 
-            centerOption[index] = if component == true then newDefaultValue2.x else if component == false then newDefaultValue.x else centerOption[index]
+            result.x = if component == true then newDefaultValue2.x else if component == false then newDefaultValue.x else 0
           else if index is 1
-            centerOption[index] = if component == true then newDefaultValue2.y else if component == false then newDefaultValue.y  else centerOption[index]
+            result.y = if component == true then newDefaultValue2.y else if component == false then newDefaultValue.y  else 0
           else if index is 2
-            centerOption[index] = if component == true then newDefaultValue2.z else if component == false then newDefaultValue.z  else centerOption[index]
+            result.z = if component == true then newDefaultValue2.z else if component == false then newDefaultValue.z  else 0
+          centerOption = result  
+        else
+          centerOption = toVector3(options[optionname])
+          
       options[optionname] = centerOption
     else    
       if typeof centerOption is 'boolean'
@@ -209,7 +276,7 @@ parseCenter = (options, optionname, defaultValue, defaultValue2, vectorClass) ->
   
   console.log "default",defaultValue,"default2",defaultValue2
   result = parseOption(options, optionname, defaultValue)
-  result = new vectorClass(result)
+  result = result
   result
   
 insertSorted = (array, element, comparefunc) ->
@@ -809,8 +876,8 @@ module.exports.parseOptionAsLocations = parseOptionAsLocations
 module.exports.parseCenter = parseCenter
 
 #added
-module.exports.parseParamAs3dVector = parseParamAs3dVector
-module.exports.parseParamAs2dVector = parseParamAs2dVector
+module.exports.toVector3 = toVector3
+module.exports.toVector2 = toVector2
 
 
 #needed ??

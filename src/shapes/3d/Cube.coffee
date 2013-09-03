@@ -1,5 +1,7 @@
+use 'strict'
+
 ObjectBase = require '../base'
-utils = require '../utils'
+optParse = require '../optParse'
 
 class Cube extends ObjectBase
   # Construct a solid cuboid. with optional corner roundings (making it, you guessed it, a rounded cube)
@@ -16,10 +18,10 @@ class Cube extends ObjectBase
   #     })
   constructor:(options)->
     options = options or {}
-    defaults = { size:[1,1,1], center:[0,0,0], r:0, $fn:0}
+    @defaults = { size:[1,1,1], center:[0,0,0], r:0, $fn:0}
     
-    size = utils.parseOptionAs3DVector(options, "size", defaults["size"])
-    center = utils.parseCenter(options,"center",size.divideScalar(2),defaults["center"], THREE.Vector3)
+    size = utils.parseOptionAs3DVector(options, "size", ^defaults["size"])
+    center = utils.parseCenter(options, "center", size.divideScalar(2), @defaults["center"], THREE.Vector3)
     
     console.log "size", size, "center",center
     #do params validation
