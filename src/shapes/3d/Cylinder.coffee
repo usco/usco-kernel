@@ -1,6 +1,10 @@
+'use strict'
+THREE = require 'three'
+
 ObjectBase = require '../base'
 Constants = require '../constants'
-utils = require '../utils'
+utils = require '../../utils'
+optParse = require '../optParse'
 
 class Cylinder extends ObjectBase
   # Construct a solid cylinder.

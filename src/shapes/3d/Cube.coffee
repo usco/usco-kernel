@@ -1,5 +1,5 @@
-use 'strict'
-
+'use strict'
+THREE = require 'three'
 ObjectBase = require '../base'
 optParse = require '../optParse'
 
@@ -20,8 +20,8 @@ class Cube extends ObjectBase
     options = options or {}
     @defaults = { size:[1,1,1], center:[0,0,0], r:0, $fn:0}
     
-    size = utils.parseOptionAs3DVector(options, "size", ^defaults["size"])
-    center = utils.parseCenter(options, "center", size.divideScalar(2), @defaults["center"], THREE.Vector3)
+    size = optParse.parseOptionAs3DVector(options, "size", @defaults["size"])
+    center = optParse.parseCenter(options, "center", size.divideScalar(2), @defaults["center"], THREE.Vector3)
     
     console.log "size", size, "center",center
     #do params validation
