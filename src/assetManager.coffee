@@ -1,5 +1,7 @@
 'use strict'
 Q = require("q")
+logger = require("../logger")
+logger.level = "debug"
 
 ###*
  *Manager for lifecyle of assets: load, store unload 
@@ -22,7 +24,7 @@ class AssetManager
       
   _parseFileUri: ( fileUri )->
     #extract store, file path etc
-    #console.log "extracting store from", fileUri
+    logger.debug "extracting store from", fileUri
     url = require('url')
     pathInfo = url.parse( fileUri )
     storeName = pathInfo.protocol
@@ -55,11 +57,13 @@ class AssetManager
   loadResource: ( fileUri, transient, cachingParams  )->
     #load resource, store it in resource map, return it for use
     transient = transient or false    
-    
     deferred = Q.defer()
     
+    if not fileUri?
+      throw new Error( "Invalid file name : #{fileUri}" )
+      
     [storeName,filename] = @_parseFileUri( fileUri )
-    console.log("storeName",storeName,"filename",filename)
+    logger.debug( "Looking for filename", filename,  "in ", storeName )
     
     if not (filename of @assetCache)
       extension = filename.split(".").pop()
@@ -73,7 +77,8 @@ class AssetManager
       loaderDeferred = store.loadFile(filename)
       
       #loadedResource 
-      loaderDeferred.then (loadedResource) =>
+      loaderDeferred
+      .then (loadedResource) =>
         if extension not in @codeExtensions
           parser = @parsers[ extension ]
           if not parser
