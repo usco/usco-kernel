@@ -1,68 +1,8 @@
-Backbone = require 'backbone'
-buildProperties = require 'core/utils/buildProperties'
+'use strict'
+
 Compiler = require './compiler'
 
 
-class ProjectFile extends Backbone.Model
-  idAttribute: 'name'
-  defaults:
-    name:     "testFile.coffee"
-    content:  ""
-    isActive: false
-    isSaveAdvised: false
-    isCompileAdvised: false
-  attributeNames: ['name','content','isActive','isSaveAdvised','isCompileAdvised']
-  persistedAttributeNames : ['name','content']
-  buildProperties @
-    
-  constructor:(options)->
-    super options
-    #This is used for "dirtyness compare" , might be optimisable (storage vs time , hash vs direct compare)
-    @storedContent = @content
-    @on("save",   @_onSaved)
-    @on("change:name", @_onNameChanged)
-    @on("change:content", @_onContentChanged)
-    @on("change:isActive",@_onIsActiveChanged)
-  
-  _onNameChanged:()=>
-    @isSaveAdvised = true
-
-  _onContentChanged:()=>
-    @isCompileAdvised = true
-    if (@storedContent is @content)
-      @isSaveAdvised = false
-    else
-      @isSaveAdvised = true
-      
-  _onSaved:()=>
-    #when save is sucessfull
-    @storedContent = @content
-    @isSaveAdvised = false
-    
-  _onIsActiveChanged:=>
-    if @isActive
-      @trigger("activated")
-    else
-      @trigger("deActivated")
- 
-  save: (attributes, options)=>
-    backup = @toJSON
-    @toJSON= =>
-      attributes = _.clone(@attributes)
-      for attrName, attrValue of attributes
-        if attrName not in @persistedAttributeNames
-          delete attributes[attrName]
-      return attributes
-     
-    super attributes, options 
-    @toJSON=backup
-    @trigger("save",@)
-   
-   destroy:(options)=>
-    options = options or {}
-    @trigger('destroy', @, @collection, options)
-    
-    
 class Folder extends Backbone.Collection
   model: ProjectFile
   sync : null
@@ -91,24 +31,22 @@ class Folder extends Backbone.Collection
   * a project contains files 
   * a project can reference another project (includes)
 ###
-class Project extends Backbone.Model
-
-  idAttribute: 'name'
-  defaults:
-    name:     "Project"
-    lastModificationDate: null
-    activeFile : null
-    isSaveAdvised:false #based on propagation from project files : if a project file is changed, the project is tagged as "dirty" aswell
-    isCompiled: false
-    isCompileAdvised:false
-  
-  attributeNames: ['name','lastModificationDate','activeFile','isCompiled','isSaveAdvised','isCompileAdvised']
+class Project 
   persistedAttributeNames : ['name','lastModificationDate']
-  buildProperties @
   
   constructor:(options)->
     options = options or {}
-    super options
+    
+    
+    @name = "Project"
+    @lastModificationDate: null
+    
+    @activeFile = null
+    @isSaveAdvised = false #based on propagation from project files : if a project file is changed, the project is tagged as "dirty" aswell
+    @isCompiled = false
+    @isCompileAdvised = false
+    
+    
     @compiler = options.compiler ? new Compiler()
     
     @rootFolder = new Folder()
@@ -119,6 +57,7 @@ class Project extends Backbone.Model
     @rootAssembly = {}
     @dataStore = null
     
+    @rootPath = ""
     #
     @fileNames = []
     
