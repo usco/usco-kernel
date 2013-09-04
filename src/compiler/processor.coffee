@@ -1,8 +1,8 @@
-#log = require('logerize') or console.log
+'use strict'
+
 logger = require("../../logger")
 logger.level = "info"
-
-CoffeeScript =  require('coffee-script-redux') #redux cannot yet handler "super" calls, so useless in our case, sadly
+#CoffeeScript =  require('coffee-script-redux') #redux cannot yet handler "super" calls, so useless in our case, sadly
 CoffeeScript =  require('coffee-script')
 Q = require("q")
 esprima = require "esprima"
@@ -59,12 +59,19 @@ class Processor
     @rawScript = @script 
     
     @script = """
-{Cube,ObjectBase}=geometryKernel
-
-#assembly = new THREE.Object3D()
-
-#include script
-#{@script}
+    {Cube,ObjectBase} = geometryKernel
+    
+    #assembly = new THREE.Object3D()
+    
+    #clear log entries
+    log = {}
+    log.entries = []
+    
+    #clear class registry    
+    classRegistry = {}
+    
+    #include script
+    #{@script}
 
     """
     
@@ -127,7 +134,7 @@ class Processor
     #add return statement
     #return results as an object for cleaness
     bla = """
-    var result = {rootAssembly:assembly};
+    var result = {"rootAssembly":assembly,"partRegistry":classRegistry, "logEntries":log.entries}
     return result;"""
     @script = @script + bla
     
@@ -145,9 +152,8 @@ class Processor
     
     f = new Function("geometryKernel","assembly", workerscript)
     result = f(shapesKernel,assembly)
-    {rootAssembly} = result
-    
-    #{rootAssembly,partRegistry,logEntries} = result
+    #{rootAssembly} = result
+    {rootAssembly,partRegistry,logEntries} = result
     
     logger.debug "compile result"+ result
     #@callback(rootAssembly,partRegistry,logEntries)

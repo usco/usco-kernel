@@ -32,7 +32,7 @@ describe "Processor", ->
   
   it 'avoid recompiling on trivial changes (comments, whitespace', (done)->
     source = "assembly.add( new Cube() )"
-    
+    console.log "h"
     processor.processScript( source ).then ( rootAssembly) =>
       expect( processor.reEvalutate ).toBe( true )
       processor.processScript( source )
