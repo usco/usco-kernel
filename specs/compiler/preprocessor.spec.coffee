@@ -3,19 +3,11 @@
 #PreProcessor = require "../../src/compiler/preprocessor"
 AssetManager = require "../../src/assetManager"
 PreProcessor = require "../../src/compiler/preprocessor"
-#BrowserStore = require "stores/browser/browserStore"
+File = require "../../src/io/file"
 
-#DummyStore = require "./dummyStore"
-#DummyXHRStore = require "./dummyXHRStore"
+DummyStore = require "../dummyStore"
+DummyXHRStore = require "../dummyXHRStore"
   
-checkDeferred=(df,fn) ->
-  callback = jasmine.createSpy()
-  df.then(callback)
-  waitsFor -> callback.callCount > 0
-  
-  runs -> 
-    fn.apply @,callback.mostRecentCall.args if fn
-
 
 describe "PreProcessor", ->
   stores = []
@@ -25,18 +17,19 @@ describe "PreProcessor", ->
   preprocessor= null
   
   beforeEach ->
-    #stores["dummy"] = new DummyStore()
-    #stores["xhr"] = new DummyXHRStore()
+    stores["dummy"] = new DummyStore()
+    stores["xhr"] = new DummyXHRStore()
     
     #project = new Project
     #  name:"TestProject"
-    assetManager = new AssetManager()
-    preprocessor = new PreProcessor()
+    assetManager = new AssetManager( stores )
+    preprocessor = new PreProcessor( assetManager )
   
-  it 'does some things',(done)-> #seriously?
-    code = """include ("config.coffee")"""
+  it 'handle include statements',(done)-> #seriously?
+    #testFile = new File( "testFile.coffee", """include ("config.coffee")""")
+    testFile = new File( "testFile.coffee", """include ("dummy:specs/test.coffee")""")
   
-    preprocessor.process( code ).done ( bla ) =>
+    preprocessor.process( testFile ).done ( bla ) =>
       console.log "bla"
       done()
     
