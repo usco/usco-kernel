@@ -1,16 +1,8 @@
 Processor = require "../../src/compiler/processor"
   
-checkDeferred=(df,fn) ->
-  callback = jasmine.createSpy()
-  df.then(callback)
-  waitsFor -> callback.callCount > 0
-  
-  runs -> 
-    fn.apply @,callback.mostRecentCall.args if fn
-
-
 describe "Processor", ->
   processor= null
+  stores = []
   
   beforeEach ->
     processor = new Processor()

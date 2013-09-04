@@ -4,6 +4,8 @@ ThreeCSG =  require( '../../vendor/ThreeCSG' )
 #TODO: where to do canonicalization and normalization?
 #TODO: review inheritance : basic geometry (cube, sphere) should not have children etc (like "mesh") but should have position, rotation etc
 #TODO: add connectors
+#TODO: since we want objects / parts to be exportable individually, perhaps adding "export" methods to them
+# would be a good idea ...
 
 class ObjectBase extends THREE.Mesh
   #base class regrouping features of THREE.Mesh and THREE.CSG

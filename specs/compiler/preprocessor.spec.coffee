@@ -1,6 +1,12 @@
-  
+'use strict'
+
+#PreProcessor = require "../../src/compiler/preprocessor"
+AssetManager = require "../../src/assetManager"
 PreProcessor = require "../../src/compiler/preprocessor"
 #BrowserStore = require "stores/browser/browserStore"
+
+#DummyStore = require "./dummyStore"
+#DummyXHRStore = require "./dummyXHRStore"
   
 checkDeferred=(df,fn) ->
   callback = jasmine.createSpy()
@@ -12,22 +18,29 @@ checkDeferred=(df,fn) ->
 
 
 describe "PreProcessor", ->
+  stores = []
   project = null
+  
+  assetManager = null
   preprocessor= null
   
   beforeEach ->
-    project = new Project
-      name:"TestProject"
+    #stores["dummy"] = new DummyStore()
+    #stores["xhr"] = new DummyXHRStore()
     
+    #project = new Project
+    #  name:"TestProject"
+    assetManager = new AssetManager()
     preprocessor = new PreProcessor()
- 
-###  
-  it 'throws an error if there is no correctly named main file',->
-    project.addFile
-      name:"NotTheRightName.coffee"
-      content:""""""
-    expect(()-> (preprocessor.process(project))).toThrow("Missing main file (needs to have the same name as the project containing it)")
   
+  it 'does some things',(done)-> #seriously?
+    code = """include ("config.coffee")"""
+  
+    preprocessor.process( code ).done ( bla ) =>
+      console.log "bla"
+      done()
+    
+  ###  
   it 'can check for circular dependency issues and raise an exception',->
     project.addFile
       name:"TestProject.coffee"
@@ -38,8 +51,15 @@ describe "PreProcessor", ->
     project.addFile
       name:"someOtherFile.coffee"
       content:"""include ("TestProject.coffee")"""
-      
     expect(()-> (preprocessor.process(project))).toThrow("Circular dependency detected from someOtherFile.coffee to TestProject.coffee")
+  
+
+  it 'throws an error if there is no correctly named main file',->
+    project.addFile
+      name:"NotTheRightName.coffee"
+      content:""""""
+    expect(()-> (preprocessor.process(project))).toThrow("Missing main file (needs to have the same name as the project containing it)")
+  
   
   it 'can emulate coffeescript function syntax (with or without parens) (as it is a "pseudo method") for includes',->
     project.addFile
@@ -57,7 +77,6 @@ describe "PreProcessor", ->
     checkDeferred $.when(preprocessor.process(project)), (obsPreprocessedSource) =>
       expect(obsPreprocessedSource).toBe(expPreProcessedSource)
     
-  
   it 'can process file includes from the current project (simple)',->
     project.addFile
       name:"TestProject.coffee"
@@ -76,7 +95,7 @@ describe "PreProcessor", ->
     """
     checkDeferred $.when(preprocessor.process(project)), (obsPreprocessedSource) =>
       expect(obsPreprocessedSource).toBe(expPreProcessedSource)
-    
+        
   it 'can process file includes from the current project (complex)',->
     project.addFile
       name:"TestProject.coffee"

@@ -14,7 +14,7 @@ class Compiler
     {@project, @backgroundProcessing} = options
     
     @preProcessor = new PreProcessor()
-    @csgProcessor = new Processor()
+    @Processor = new Processor()
     
     #this data structure is filled with log & error data 
     @compileResultData = {}

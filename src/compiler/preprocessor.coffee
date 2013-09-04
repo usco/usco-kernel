@@ -1,11 +1,14 @@
 'use strict'
 
+Q = require("q")
 graphDiff = require('graph-difference')
 
 
 class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
-  constructor:()->
+  constructor:( assetManager )->
+    @assetManager = assetManager
+    
     @debug = null
     @project = null
     @includePattern = /(?!\s*?#)(?:\s*?include\s*?)(?:\(?\"([\w\//:'%~+#-.*]+)\"\)?)/g
@@ -19,16 +22,19 @@ class PreProcessor
     @resolvedIncludesFull = []
     @unresolvedIncludes = []
     
-    @deferred = $.Deferred()
-    $.when.apply($, @patternReplacers).done ()=>
-      if coffeeToJs
-        @processedResult = CoffeeScript.compile(@processedResult, {bare: true})
+    @processIncludes( "bla", source )
+    
+    @deferred = Q.defer()
+    Q.when.apply(Q, @patternReplacers).done ()=>
+      #if coffeeToJs
+      #  @processedResult = CoffeeScript.compile(@processedResult, {bare: true})
       
-      @processedResult = @_findParams(@processedResult) # just a test
-      #console.log "@processedResult",@processedResult
+      #@processedResult = @_findParams(@processedResult) # just a test
+      
+      console.log "@processedResult",@processedResult
       @deferred.resolve(@processedResult)
     
-    return @deferred.promise()
+    return @deferred.promise
     
   process_old:(project, coffeeToJs)=>
     coffeeToJs = coffeeToJs or false
@@ -37,7 +43,7 @@ class PreProcessor
     @resolvedIncludesFull = []
     @unresolvedIncludes = []
     
-    @deferred = $.Deferred()
+    @deferred = Q.defer()
     
     ###
     TODO: checking for main file etc should not be the responsibility of the pre processor
@@ -69,7 +75,7 @@ class PreProcessor
       #console.log "@processedResult",@processedResult
       @deferred.resolve(@processedResult)
     
-    return @deferred.promise()
+    return @deferred.promise
   
   
   _findMatches:(source)=>
@@ -124,7 +130,7 @@ class PreProcessor
         else
           projectName = includeEntry
           
-      #console.log("store: #{store}, project: #{projectName}, subpath: #{projectSubPath}")
+      console.log("store: #{store}, project: #{projectName}, subpath: #{projectSubPath}")
       includeeFileName = fullIncludePath
       result = ""
       if includeeFileName in @unresolvedIncludes
@@ -132,10 +138,10 @@ class PreProcessor
         
       if not (includeeFileName in @resolvedIncludes)
         try
-          deferred = $.Deferred()
+          deferred = Q.defer()
           @patternReplacers.push(deferred)
           fetchResult = @_fetch_data(store,projectName,projectSubPath, deferred)
-          $.when(fetchResult).then (fileContent)=>
+          Q.when(fetchResult).then (fileContent)=>
             @processedResult=@processedResult.replace(match[0], fileContent)
             @processIncludes(includeeFileName, fileContent)
             
@@ -157,11 +163,28 @@ class PreProcessor
       #fetch the data
       @stores[store].getFileOrProjectCode( project, path, deferred)
       
-      result = deferred.promise()
+      result = deferred.promise
       return result
     catch error
       console.log "error: #{error}"
       throw new Error("#{path} : No such file or directory")
 
+  _buildDepsGraph:()=>
+    DepGraph = require('dependency-graph').DepGraph
+    
+    graph = new DepGraph()
+    graph.addNode('a')
+    graph.addNode('b')
+    graph.addNode('c')
+    
+    graph.addDependency('a', 'b')
+    graph.addDependency('b', 'c')
+    
+    graph.dependenciesOf('a')
+    graph.dependenciesOf('b')
+    graph.dependantsOf('c')
+    
+    graph.overallOrder()
+    graph.overallOrder(true)
       
 module.exports = PreProcessor    
