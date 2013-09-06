@@ -1,6 +1,8 @@
 'use strict'
-AssetManager = require("../src/assetManager")
-THREE = require( 'three' )
+path = require "path"
+
+AssetManager = require "../src/assetManager"
+THREE = require 'three'
 STLParser = require "./STLParser"
 AMFParser = require "./AMFParser"
 
@@ -24,6 +26,7 @@ describe "AssetManager", ->
     stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
   
+  ###
   it 'should fail to load resources gracefully',(done)->
     assetManager.addParser("stl", STLParser)
     
@@ -31,7 +34,24 @@ describe "AssetManager", ->
     assetManager.loadResource( fileUri ).catch ( error ) =>
       expect(error).toEqual("specs/femur.stl not found")
       done()
-  , 400
+  , 400###
+
+  it 'can resolve absolute and relative file paths',(done)->
+    assetManager.addParser("stl", STLParser)
+    
+    stores["dummy"].rootUri = path.resolve("./specs")
+    
+    fileUri = "dummy:./data/cube.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      console.log("resource", loadedResource != null)
+      done()
+      #expect(error).toEqual("specs/femur.stl not found")
+    ###
+    fileUri = "dummy:./cube.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      console.log("resource", loadedResource)
+  , 400###
+    
   
   it 'can load resources from different stores',(done)->
     assetManager.addParser("stl", STLParser)
@@ -44,7 +64,7 @@ describe "AssetManager", ->
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
       done()
-
+  ###
   it 'caches resources by default',(done)->
     assetManager.addParser("stl", STLParser)
     stlFileName = "dummy:specs/data/cube.stl"
@@ -81,7 +101,7 @@ describe "AssetManager", ->
       assetManager.unLoadResource( stlFileName )
       expect(assetManager.assetCache).toEqual({})
       done()   
-    
+   ### 
     
 ###
   it 'can handle various file types via settable parsers',(done)->

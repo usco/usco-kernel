@@ -2,6 +2,10 @@ Q = require("q")
 fs = require('fs')
 
 class DummyStore
+  constructor:->
+    @rootUri = ""
+    
+    
   loadFile:( uri )=>
     deferred = Q.defer()
     

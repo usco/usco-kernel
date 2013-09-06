@@ -22,7 +22,7 @@ class AssetManager
   	#where BEFORE asking the asset manager to load anything
   	@currentLocation = ""
       
-  _parseFileUri: ( fileUri )->
+  _parseFileUri: ( fileUri, parentUri )->
     #extract store, file path etc
     logger.debug "extracting store from", fileUri
     url = require('url')
@@ -42,8 +42,30 @@ class AssetManager
       fileName = pathInfo.href
     
     return [ storeName, fileName ] 
+  
+  _toAbsoluteUri:(fileName, parentUri, store)->
+    #normalization test
+    path = require 'path'
     
+    segments = fileName.split( "/" )
+    if segments[0] != '.' and segments[0] != '..'
+      logger.debug("absolute path")
+      return fileName
+      
+    logger.debug("relative path")
+    #path is relative
+    rootUri = parentUri or store.rootUri or ""
+    logger.debug("rootUri", rootUri)
     
+    normalized = path.normalize( fileName )
+    fullPath = path.resolve( rootUri, fileName )
+    fullPath2 = path.join( rootUri, normalized )
+    #logger.debug("Normalized", normalized)
+    logger.debug("fullPath", fullPath)
+    #logger.debug("fullPath2", fullPath2)
+    
+    return fullPath
+  
   addParser:( extension, parser )=>
     #add a parser
     @parsers[extension] = new parser()
@@ -51,27 +73,35 @@ class AssetManager
   ###* 
    * fileUri : path to the file, starting with the node prefix
    * transient : boolean : if true, don't store the resource in cache
+   * parentUri : string : not sure we should have this here : for relative path resolution
    * caching params : various cachin params : lifespan etc
    * If no store is specified, file paths are expected to be relative
   ###
-  loadResource: ( fileUri, transient, cachingParams  )->
+  loadResource: ( fileUri, transient, parentUri, cachingParams  )->
     #load resource, store it in resource map, return it for use
     transient = transient or false    
+    parentUri = parentUri or null
+    
     deferred = Q.defer()
     
     if not fileUri?
       throw new Error( "Invalid file name : #{fileUri}" )
       
-    [storeName,filename] = @_parseFileUri( fileUri )
+    [storeName,filename] = @_parseFileUri( fileUri, parentUri)
     logger.debug( "Looking for filename", filename,  "in ", storeName )
+    
+    #get store instance , if it exists
+    store = @stores[ storeName ]
+    if not store
+      throw new Error("No store named #{storeName}")
+    
+    #resolve full path
+    filename = @_toAbsoluteUri(filename, parentUri, store)
+    
     
     if not (filename of @assetCache)
       extension = filename.split(".").pop()
       #console.log "parsers", @parsers, "extension", extension, "store",storeName
-      
-      store = @stores[ storeName ]
-      if not store
-        throw new Error("No store named #{storeName}")
       
       #load raw data from file, get a deferred
       loaderDeferred = store.loadFile(filename)
