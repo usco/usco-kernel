@@ -16,7 +16,8 @@
     "esmorph": "0.0.1",
     "escodegen": "0.0.26",
     "coffee-script-redux": "~2.0.0-beta6",
-    "coffee-script": "~1.6.3"
+    "coffee-script": "~1.6.3",
+    "logerize": "0.0.2"
   },
   "devDependencies": {
     "jasmine-node": "1.10.2",
