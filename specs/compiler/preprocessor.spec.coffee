@@ -27,10 +27,10 @@ describe "PreProcessor", ->
   
   it 'handle include statements',(done)-> #seriously?
     #testFile = new File( "testFile.coffee", """include ("config.coffee")""")
-    testFile = new File( "testFile.coffee", """include ("dummy:specs/test.coffee")""")
+    testFile = new File( "testFile.coffee", """include ("dummy:specs/data/test.coffee")""")
   
     preprocessor.process( testFile ).done ( bla ) =>
-      console.log "bla"
+      console.log "bla",bla
       done()
     
   ###  

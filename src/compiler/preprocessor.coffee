@@ -150,13 +150,16 @@ class PreProcessor
         
       if not (includeeFileName in @resolvedIncludes)
         try
-          deferred = Q.defer()
-          @patternReplacers.push(deferred)
           fetchResult = @_fetch_data( fileUri )
-          Q.when(fetchResult).then (fileContent)=>
+          @patternReplacers.push(fetchResult)
+          
+          fetchResult
+          .then (fileContent)=>
             logger.debug "fileContent",fileContent
             @processedResult=@processedResult.replace(match[0], fileContent)
             @processIncludes(includeeFileName, fileContent)
+          .catch (error)=>
+            logger.error("Errrrooor", error)
          
         catch error
           console.log "sdf"
@@ -172,9 +175,7 @@ class PreProcessor
 
   _fetch_data:( fileUri )=>
     logger.debug "fetching data from : #{fileUri}"
-    
     #if store is null then prefix = "local" else prefix = store
-    
     ### 
     @assetManager.loadResource(  )
     .then (result) =>
@@ -184,16 +185,6 @@ class PreProcessor
     ###  
     
     return @assetManager.loadResource( fileUri )
-    
-    ### 
-      #fetch the data
-      @stores[store].getFileOrProjectCode( project, path, deferred)
-      
-      result = deferred.promise
-      return result
-    catch error
-      console.log "error: #{error}"
-      throw new Error("#{path} : No such file or directory")###
 
   _buildDepsGraph:()=>
     DepGraph = require('dependency-graph').DepGraph
