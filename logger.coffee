@@ -4,6 +4,16 @@ logger = {}
 logger.level = 'info'
 logger.levels = ['error', 'warn', 'info', 'debug'];
 
+formatMessage=(message...)->
+  result = []
+  for item in message[0]
+    if typeof item != 'string'
+      item = JSON.stringify(item)
+      result.push(item)
+    else
+      result.push(item)
+  result
+
 logger.log = (level, message)->
   levels = ['error', 'warn', 'info', 'debug'];
   if levels.indexOf(level) <= levels.indexOf(logger.level)
@@ -12,11 +22,10 @@ logger.log = (level, message)->
     log(level+': '+message)
       
 logger.debug = (message...)->
+  message = formatMessage(message)
   message = message.join(" ")
   level = 'debug'
   if logger.levels.indexOf(level) <= logger.levels.indexOf(logger.level)
-    if (typeof message is not 'string')
-      message = JSON.stringify(message)
     log.debug(message)
 
 logger.info = (message...)->
