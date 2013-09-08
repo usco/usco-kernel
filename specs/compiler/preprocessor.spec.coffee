@@ -7,7 +7,7 @@ File = require "../../src/io/file"
 
 DummyStore = require "../dummyStore"
 DummyXHRStore = require "../dummyXHRStore"
-  
+STLParser = require "../STLParser"  
 
 describe "PreProcessor", ->
   stores = []
@@ -23,8 +23,10 @@ describe "PreProcessor", ->
     #project = new Project
     #  name:"TestProject"
     assetManager = new AssetManager( stores )
+    assetManager.addParser("stl", STLParser)
     preprocessor = new PreProcessor( assetManager )
   
+    
   
   it 'handles all necessary pre-processing',(done)->
     
@@ -45,7 +47,10 @@ dummy = new Dummy()
     importGeom("dummy:specs/data/cube.stl")
     include("dummy:specs/data/test.coffee")
     """
-    source = """variable = 42
+    source = """
+include("dummy:specs/data/test.coffee")
+
+variable = 42
 method= (param)->
   console.log("param",param);
 
@@ -54,12 +59,18 @@ class Dummy
     @myVar = 42
     tmpVar = "my tailor is not so rich"
     subGeom = importGeom("dummy:specs/data/cube.stl")
+    subGeom2 = importGeom("dummy:specs/data/cube.stl")
 
 dummy = new Dummy()
     """
-    preprocessor.process( source ).done ( bla ) =>
+    preprocessor.process( source )
+    .then ( bla ) =>
       console.log "bla",bla
       done()
+    .fail (error) =>
+      expect(false).toBeTruthy error.message
+      done()
+      
   
   ###
   it 'handle include statements',(done)-> #seriously?

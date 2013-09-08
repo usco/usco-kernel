@@ -12,6 +12,12 @@ graphDiff = require('graph-difference')
 File = require "../io/file"
 
 
+#resources such as geometry (stl, amf, etc) , text files etc are LEAVES in the graph, no depency resolution is made from them
+#resource such as code (coffee, js, litcoffee, ultishape etc) can be either LEAVES (no dependencies) or not, but dependency resolution is ALWAYS done from them
+
+#TODO: perhaps we could "cheat" around the async loading issues by checking out, via the AST if an class or method containing imports ACTUALLY GETS INSTANCIATED
+#TODO: we need to track changes between subsequent compiles : if a node in the AST has change but the resulting geometry would be the same, no need to re compile !
+
 class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
   constructor:( assetManager )->
@@ -33,21 +39,14 @@ class PreProcessor
 
     source = @_prepareScript( fileOrSource )
     ast = @_preOptimise( source )
-    @_walkAst( ast )
+    moduleData = @_walkAst( ast )
     
-    @processIncludes( fileOrSource )
+    importDeferreds = @resolveImports( moduleData.importGeoms )
+    includeDeferreds = @resolveIncludes( moduleData.includes )
     
-    @deferred = Q.defer()
-    Q.when.apply(Q, @patternReplacers).done ()=>
-      #if coffeeToJs
-      #  @processedResult = CoffeeScript.compile(@processedResult, {bare: true})
-      
-      #@processedResult = @_findParams(@processedResult) # just a test
-      
-      console.log "@processedResult",@processedResult
-      @deferred.resolve(@processedResult)
+    #@processIncludes( fileOrSource )
     
-    return @deferred.promise
+    return Q.all([importDeferreds, includeDeferreds])
     
   
   _findMatches:(source)=>
@@ -110,8 +109,6 @@ class PreProcessor
       #limit = limit or 2
       #level = level or 0
       #console.log "visitore", visitor
-
-      
       if level < limit or limit == 0
         key = undefined
         child = undefined
@@ -155,17 +152,47 @@ class PreProcessor
     console.log("includes",includes)
     console.log("importGeoms",importGeoms)    
     
-    #generate auto exports script
-    autoExportsSrc = ""
-    autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
-    console.log(autoExportsSrc)  
+    return {rootElements:rootElements, includes:includes, importGeoms:importGeoms}
+     
   
   ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
   * 
   ###
-  generateExports:()=>
-    
+  generateExports:( rootElements )=>
+    #generate auto exports script
+    autoExportsSrc = ""
+    autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
+    console.log(autoExportsSrc) 
+  
+  
+  ###*
+  * pre fetch & cache all "geometry" used by module, (LEVEL 0 implementation)
+  * 
+  ###
+  resolveImports:( importGeoms )=>
+    importDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in importGeoms)
+    logger.debug("Geometry import deferreds: #{importDeferreds.length}")
+    return Q.all(importDeferreds)
+
+  ###*
+  * pre fetch & cache "included" module (code import)
+  * 
+  ###
+  resolveIncludes:( includes )=>
+    includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
+    logger.debug("Include deferreds: #{includeDeferreds.length}")
+   
+    onLoaded=( resource )=>
+      console.log "LOADED", resource
+    ###for fileUri in includes
+      toto = @assetManager.loadResource( fileUri )
+      console.log("bla", toto)
+      toto.then(onLoaded)###
+    #bla = includeDeferreds[0]
+    #bla.then(onLoaded)
+    #console.log("bla", JSON.stringify(bla))
+    return Q.all(includeDeferreds)
   
   ###* 
   * handle the external geometries/object hiearchies inclusion: ie stl, amf, obj etc
