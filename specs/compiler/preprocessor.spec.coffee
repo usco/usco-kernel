@@ -25,15 +25,52 @@ describe "PreProcessor", ->
     assetManager = new AssetManager( stores )
     preprocessor = new PreProcessor( assetManager )
   
+  
+  it 'handles all necessary pre-processing',(done)->
+    
+    #source = """include("dummy:specs/data/test.coffee")"""
+    source = "variable = 42"
+    source = """variable = 42
+method= (param)->
+  console.log("param",param);
+
+class Dummy
+  constructor:->
+    @myVar = 42
+    tmpVar = "my tailor is not so rich"
+
+dummy = new Dummy()
+    """
+    source = """
+    importGeom("dummy:specs/data/cube.stl")
+    include("dummy:specs/data/test.coffee")
+    """
+    source = """variable = 42
+method= (param)->
+  console.log("param",param);
+
+class Dummy
+  constructor:->
+    @myVar = 42
+    tmpVar = "my tailor is not so rich"
+    subGeom = importGeom("dummy:specs/data/cube.stl")
+
+dummy = new Dummy()
+    """
+    preprocessor.process( source ).done ( bla ) =>
+      console.log "bla",bla
+      done()
+  
+  ###
   it 'handle include statements',(done)-> #seriously?
-    #testFile = new File( "testFile.coffee", """include ("config.coffee")""")
-    testFile = new File( "testFile.coffee", """include ("dummy:specs/data/test.coffee")""")
+    #testFile = new File( "testFile.coffee", """include("config.coffee")""")
+    testFile = new File( "testFile.coffee", """include("dummy:specs/data/test.coffee")""")
   
     preprocessor.process( testFile ).done ( bla ) =>
       console.log "bla",bla
       done()
     
-  ###  
+  
   it 'can check for circular dependency issues and raise an exception',->
     project.addFile
       name:"TestProject.coffee"
