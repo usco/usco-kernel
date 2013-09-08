@@ -17,6 +17,7 @@ checkDeferred=(df,fn) ->
     runs -> 
       fn.apply @,callback.mostRecentCall.args if fn
 
+            
 describe "AssetManager", ->
   assetManager = null
   stores = []
@@ -26,7 +27,6 @@ describe "AssetManager", ->
     stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
   
-  ###
   it 'should fail to load resources gracefully',(done)->
     assetManager.addParser("stl", STLParser)
     
@@ -34,23 +34,25 @@ describe "AssetManager", ->
     assetManager.loadResource( fileUri ).catch ( error ) =>
       expect(error).toEqual("specs/femur.stl not found")
       done()
-  , 400###
+  , 400
 
   it 'can resolve absolute and relative file paths',(done)->
     assetManager.addParser("stl", STLParser)
-    
+
+    #relative    
     stores["dummy"].rootUri = path.resolve("./specs")
-    
     fileUri = "dummy:./data/cube.stl"
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
-      console.log("resource", loadedResource != null)
+      expect( loadedResource ).not.toEqual(null)
       done()
-      #expect(error).toEqual("specs/femur.stl not found")
-    ###
-    fileUri = "dummy:./cube.stl"
+    
+    #absolute
+    fullPath = path.resolve("./specs/data/cube.stl")
+    fileUri = "dummy:#{fullPath}"
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
-      console.log("resource", loadedResource)
-  , 400###
+      expect( loadedResource ).not.toEqual(null)
+      done()
+  , 400
     
   
   it 'can load resources from different stores',(done)->
