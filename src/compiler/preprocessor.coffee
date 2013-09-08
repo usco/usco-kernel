@@ -9,6 +9,8 @@ esmorph = require "esmorph"
 #require "escodegen"
 Q = require("q")
 graphDiff = require('graph-difference')
+#DepGraph = require('dependency-graph').DepGraph
+
 File = require "../io/file"
 
 
@@ -59,15 +61,21 @@ class PreProcessor
       match = @includePattern.exec(source)
     return matches
   
-  
-  
   isInclude: (node)->
-    c = node.callee;
+    c = node.callee
     return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'include')
   
   isImportGeom: (node)->
-    c = node.callee;
+    c = node.callee
     return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'importGeom')
+  
+  isParams: (node)->
+    #TODO: fix this 
+    c = node.callee
+    if c?
+      name = c.name
+    #console.log "NODE", node, "callee",c, "Cname", name, "type",node.type, "name", node.name
+    return (c and node.type == 'VariableDeclaration' and c.type == 'Identifier' and c.name == 'params')
   
   ###*
   * prepare the source for compiling : convert to coffeescript, inject dependencies etc
@@ -89,7 +97,7 @@ class PreProcessor
   _preOptimise:( source )=>
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
     logger.debug("AST", ast)
-    console.log("AST",ast)
+    #console.log("AST",ast)
     return ast
     ###
     if (@_prevAst?)
@@ -124,6 +132,7 @@ class PreProcessor
     rootElements = []
     includes = []
     importGeoms = []
+    params = [] #TODO: only one set of params is allowed, this needs to be changed
     
     
     #ALL of the level 0 (root level) items need to be added to the exports, if so inclined
@@ -147,13 +156,17 @@ class PreProcessor
       if @isImportGeom( node )
         console.log("IsImportGeom",node.arguments[0].value)
         importGeoms.push( node.arguments[0].value )
+      
+      if @isParams( node )
+        console.log("isParams",node.arguments[0].value)
+        params.push( node.arguments[0].value )
     
     console.log("rootElements", rootElements)
     console.log("includes",includes)
-    console.log("importGeoms",importGeoms)    
+    console.log("importGeoms",importGeoms)   
+    console.log("params",params)    
     
     return {rootElements:rootElements, includes:includes, importGeoms:importGeoms}
-     
   
   ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
@@ -165,9 +178,8 @@ class PreProcessor
     autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
     console.log(autoExportsSrc) 
   
-  
   ###*
-  * pre fetch & cache all "geometry" used by module, (LEVEL 0 implementation)
+  * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
   * 
   ###
   resolveImports:( importGeoms )=>
@@ -182,30 +194,7 @@ class PreProcessor
   resolveIncludes:( includes )=>
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
-   
-    onLoaded=( resource )=>
-      console.log "LOADED", resource
-    ###for fileUri in includes
-      toto = @assetManager.loadResource( fileUri )
-      console.log("bla", toto)
-      toto.then(onLoaded)###
-    #bla = includeDeferreds[0]
-    #bla.then(onLoaded)
-    #console.log("bla", JSON.stringify(bla))
     return Q.all(includeDeferreds)
-  
-  ###* 
-  * handle the external geometries/object hiearchies inclusion: ie stl, amf, obj etc
-  ###
-  processImports:( filename, source )=>
-    #TODO: how to give access to asset manager
-    #STEP 1 : list all imports
-    #STEP 2 : check if any import has already been cached
-    #STEP 3: check if any cached data needs refreshing
-    findGeomImports= (source) =>
-      
-    geomImports = findGeomImports( source );
-  
   
   ###* 
   * handle the other projects/files inclusion
@@ -288,8 +277,6 @@ class PreProcessor
     return @assetManager.loadResource( fileUri )
 
   _buildDepsGraph:()=>
-    DepGraph = require('dependency-graph').DepGraph
-    
     graph = new DepGraph()
     graph.addNode('a')
     graph.addNode('b')

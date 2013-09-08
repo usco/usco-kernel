@@ -48,6 +48,7 @@ dummy = new Dummy()
     include("dummy:specs/data/test.coffee")
     """
     source = """
+params 
 include("dummy:specs/data/test.coffee")
 
 variable = 42
@@ -71,6 +72,33 @@ dummy = new Dummy()
       expect(false).toBeTruthy error.message
       done()
       
+  
+  it 'handles all params parsing',(done)->
+    source = """params = {
+      fields:[{
+          name: 'width',
+          type: 'float',
+          default: 30,
+          caption: "Width of the cube:",
+        }
+      ],
+      fieldsets:[
+        {
+          "legend": "Main Cube",
+          "fields": ["width"]
+        }
+      ]
+    }"""
+    preprocessor.process( source )
+    .then ( bla ) =>
+      console.log "bla",bla
+      done()
+    .fail (error) =>
+      expect(false).toBeTruthy error.message
+      done()
+ 
+ 
+  
   
   ###
   it 'handle include statements',(done)-> #seriously?
