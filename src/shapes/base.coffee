@@ -7,6 +7,7 @@ ThreeCSG =  require( '../../vendor/ThreeCSG' )
 #TODO: since we want objects / parts to be exportable individually, perhaps adding "export" methods to them
 # would be a good idea ...
 
+
 class ObjectBase extends THREE.Mesh
   #base class regrouping features of THREE.Mesh and THREE.CSG
   

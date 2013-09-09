@@ -30,7 +30,8 @@
     "browserify-shim": "~2.0.8",
     "xmlhttprequest": "~1.6.0",
     "uglify-js": "~2.4.0",
-    "w3c-xmlhttprequest": "~1.1.0"
+    "w3c-xmlhttprequest": "~1.1.0",
+    "logerize": "0.0.2"
   },
   "scripts": {
     "test": "jasmine-node --coffee specs/",

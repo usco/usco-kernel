@@ -8,10 +8,11 @@ esprima = require "esprima"
 esmorph = require "esmorph"
 #require "escodegen"
 Q = require("q")
-graphDiff = require('graph-difference')
+#graphDiff = require('graph-difference')
 #DepGraph = require('dependency-graph').DepGraph
 
 File = require "../io/file"
+ASTAnalyser = require "./astUtils"
 
 
 #resources such as geometry (stl, amf, etc) , text files etc are LEAVES in the graph, no depency resolution is made from them
@@ -26,10 +27,9 @@ class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
   constructor:( assetManager )->
     @assetManager = assetManager
+    @aSTAnalyser = new ASTAnalyser()
     
     @debug = null
-    @project = null
-    @paramsPattern = /^(\s*)?params\s*?=\s*?(\{(.|[\r\n])*?\})/g
     
     @resolvedIncludes = []
     @unresolvedIncludes = []
@@ -42,7 +42,7 @@ class PreProcessor
 
     source = @_prepareScript( fileOrSource )
     ast = @_preOptimise( source )
-    moduleData = @_walkAst( ast )
+    moduleData = @aSTAnalyser._walkAst( ast )
     
     importDeferreds = @resolveImports( moduleData.importGeoms )
     includeDeferreds = @resolveIncludes( moduleData.includes )
@@ -50,21 +50,6 @@ class PreProcessor
     #@processIncludes( fileOrSource )
     return Q.all([importDeferreds, includeDeferreds])
     
-  isInclude: (node)->
-    c = node.callee
-    return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'include')
-  
-  isImportGeom: (node)->
-    c = node.callee
-    return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'importGeom')
-  
-  isParams: (node)->
-    #TODO: fix this 
-    c = node.callee
-    if c?
-      name = c.name
-    #console.log "NODE", node, "callee",c, "Cname", name, "type",node.type, "name", node.name
-    return (c and node.type == 'VariableDeclaration' and c.type == 'Identifier' and c.name == 'params')
   
   ###*
   * prepare the source for compiling : convert to coffeescript, inject dependencies etc
@@ -86,9 +71,9 @@ class PreProcessor
     srcMap.sources.push( moduleId ) 
     #srcMap.sourcesContent = [code.value];
     srcMap.file = "toto"
-    datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap));
+    datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap))
     
-    source += "\n//@ sourceMappingURL=" + datauri;
+    source += "\n//@ sourceMappingURL=" + datauri
 
     console.log "v3map2", srcMap
     logger.debug "JSIFIED script"
@@ -116,65 +101,7 @@ class PreProcessor
       jsonAst1 = JSON.stringify(ast)
     @_prevAst = jsonAst1
     return ast
-  
-  _walkAst:( ast )=>
     
-    traverse = (object,limit,level, visitor, path) =>
-      #console.log "level",level, "limit", limit, "path",path
-      #limit = limit or 2
-      #level = level or 0
-      #console.log "visitore", visitor
-      if level < limit or limit == 0
-        key = undefined
-        child = undefined
-        path = []  if typeof path is "undefined"
-        visitor.call null, object, path, level
-        subLevel = level+1
-        for key of object
-          if object.hasOwnProperty(key)
-            child = object[key]
-            traverse child, limit, subLevel, visitor, [object].concat(path)  if typeof child is "object" and child isnt null
-    
-    #get all the things we need from ast
-    rootElements = []
-    includes = []
-    importGeoms = []
-    params = [] #TODO: only one set of params is allowed, this needs to be changed
-    
-    
-    #ALL of the level 0 (root level) items need to be added to the exports, if so inclined
-    traverse ast,0,0, (node, path, level) =>
-      name = undefined
-      parent = undefined
-      
-      #console.log("level",level)
-      
-      if node.type is esprima.Syntax.VariableDeclaration and level is 2
-        console.log("VariableDeclaration")
-        for dec in node.declarations
-          decName = dec.id.name
-          #console.log "ElementName", decName
-          rootElements.push( decName )
-    
-      if @isInclude( node )
-        console.log("IsInclude",node.arguments[0].value)
-        includes.push( node.arguments[0].value )
-      
-      if @isImportGeom( node )
-        console.log("IsImportGeom",node.arguments[0].value)
-        importGeoms.push( node.arguments[0].value )
-      
-      if @isParams( node )
-        console.log("isParams",node.arguments[0].value)
-        params.push( node.arguments[0].value )
-    
-    console.log("rootElements", rootElements)
-    console.log("includes",includes)
-    console.log("importGeoms",importGeoms)   
-    console.log("params",params)    
-    
-    return {rootElements:rootElements, includes:includes, importGeoms:importGeoms}
-  
   ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
   * 
@@ -202,20 +129,6 @@ class PreProcessor
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     return Q.all(includeDeferreds)
-  
-  ###*
-  * wraps module , injecting params such as exports, include/import/require method etc
-  * 
-  ###
-  _wrapModule:( source, id, path )=>
-    wrapped = """
-    return (function ( exports, include, module, __filename, __dirname)
-    {
-      #{script}
-      console.log("exports",exports, "module",module);
-     });
-    """
-    return wrapped
   
   compile:()->
     wrapped = @wrap(@content)
