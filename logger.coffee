@@ -29,11 +29,10 @@ logger.debug = (message...)->
     log.debug(message)
 
 logger.info = (message...)->
+  message = formatMessage(message)
   message = message.join(" ")
   level = "info"
   if logger.levels.indexOf(level) <= logger.levels.indexOf(logger.level)
-    if (typeof message is not 'string')
-      message = JSON.stringify(message)
     log.info(message)
 
 logger.warn = (message...)->

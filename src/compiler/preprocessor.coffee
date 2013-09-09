@@ -19,6 +19,8 @@ File = require "../io/file"
 
 #TODO: perhaps we could "cheat" around the async loading issues by checking out, via the AST if an class or method containing imports ACTUALLY GETS INSTANCIATED
 #TODO: we need to track changes between subsequent compiles : if a node in the AST has change but the resulting geometry would be the same, no need to re compile !
+#TODO: perhaps work on a "pseudo fake"(!!) import system : preload resource and store them, AS WELL AS THE IMPORT ERRORS, then have a REAL import method that gets called
+#on script evaluation, that just returns either the actual resource or the error in a SYNC manner when script is evaluated
 
 class PreProcessor
   #dependency resolving solved with the help of http://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
@@ -27,7 +29,6 @@ class PreProcessor
     
     @debug = null
     @project = null
-    @includePattern = /(?!\s*?#)(?:\s*?include\s*?)(?:\(?\"([\w\//:'%~+#-.*]+)\"\)?)/g
     @paramsPattern = /^(\s*)?params\s*?=\s*?(\{(.|[\r\n])*?\})/g
     
     @resolvedIncludes = []
@@ -47,20 +48,8 @@ class PreProcessor
     includeDeferreds = @resolveIncludes( moduleData.includes )
     
     #@processIncludes( fileOrSource )
-    
     return Q.all([importDeferreds, includeDeferreds])
     
-  
-  _findMatches:(source)=>
-    source = source or ""
-    
-    matches = []
-    match = @includePattern.exec(source)
-    while match  
-      matches.push(match)
-      match = @includePattern.exec(source)
-    return matches
-  
   isInclude: (node)->
     c = node.callee
     return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'include')
@@ -82,11 +71,26 @@ class PreProcessor
   ###
   _prepareScript:( source )->
     #standard coffeescript
-    #{js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true})
+    #TODO: fileName needs to match module id/name
+    {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:"output.js"})
     logger.debug("raw source",source)
-    js = CoffeeScript.compile(source, {bare: true})
+              
     source = js 
     #console.log("js", js, "v3map", v3SourceMap, "map", sourceMap)
+    console.log "v3map", v3SourceMap
+    
+    moduleId = "myFileName.coffee" #TODO: use actual file name
+    srcMap = JSON.parse( v3SourceMap )
+    #TODO: this needs to contain ALL included files
+    srcMap.sources = []
+    srcMap.sources.push( moduleId ) 
+    #srcMap.sourcesContent = [code.value];
+    srcMap.file = "toto"
+    datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap));
+    
+    source += "\n//@ sourceMappingURL=" + datauri;
+
+    console.log "v3map2", srcMap
     logger.debug "JSIFIED script"
     logger.debug source
     return source
@@ -95,20 +99,23 @@ class PreProcessor
   * Make sure there have been ACTUAL changes to the code before doing the bulk of the work (ignore comment changes, whitespacing etc)
   ###
   _preOptimise:( source )=>
+    
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
     logger.debug("AST", ast)
-    #console.log("AST",ast)
-    return ast
-    ###
+    
+    #TODO: move this to per module ?
     if (@_prevAst?)
       #TODO: remove stringification step if possible
       jsonAst1 = JSON.stringify(ast)
-      jsonAst2 = JSON.stringify(@_prevAst)
+      #prevAst is already stringified
+      jsonAst2 = @_prevAst
       isDifferent = (jsonAst1 == jsonAst2)
       logger.info(" old ast is same as new ast", isDifferent)
       @reEvalutate = not isDifferent
-    @_prevAst = ast###
-  
+    else 
+      jsonAst1 = JSON.stringify(ast)
+    @_prevAst = jsonAst1
+    return ast
   
   _walkAst:( ast )=>
     
@@ -195,6 +202,28 @@ class PreProcessor
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     return Q.all(includeDeferreds)
+  
+  ###*
+  * wraps module , injecting params such as exports, include/import/require method etc
+  * 
+  ###
+  _wrapModule:( source, id, path )=>
+    wrapped = """
+    return (function ( exports, include, module, __filename, __dirname)
+    {
+      #{script}
+      console.log("exports",exports, "module",module);
+     });
+    """
+    return wrapped
+  
+  compile:()->
+    wrapped = @wrap(@content)
+        
+    f = new Function( wrapped )
+    fn = f()
+    
+    fn( @exports, @include, @, @fileName) 
   
   ###* 
   * handle the other projects/files inclusion
@@ -291,5 +320,16 @@ class PreProcessor
     
     graph.overallOrder()
     graph.overallOrder(true)
-      
+
+
+#TODO: how to handle these kind of things : not part of globals on NODE , but ok in browsers?
+btoa = (str) ->
+  buffer = undefined
+  if str instanceof Buffer
+    buffer = str
+  else
+    buffer = new Buffer(str.toString(), "binary")
+  buffer.toString "base64"
+
+
 module.exports = PreProcessor    
