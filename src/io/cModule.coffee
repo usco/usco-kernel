@@ -1,10 +1,20 @@
 'use strict'
+CoffeeScript =  require('coffee-script')
+esprima = require "esprima"
+Q = require("q")
 
+logger = require("../../logger")
+logger.level = "debug"
 File = require './File'
+ASTAnalyser = require "./astUtils"
+utils = require "../utils"
+btoa = utils.btoa
+
+
 
 ###* 
-* Coffeescad module : it is NOT a node.js module, althouth its purpose is similar, and a part of the code
-* here is ported from node modules
+* Coffeescad module : it is NOT a node.js module, although its purpose is similar, and a part of the code
+* here is ported from node modules 
 ###
 class CModule extends File
   constructor:(name, content, parent)->
@@ -18,15 +28,85 @@ class CModule extends File
     @children = []
     
     @_extensions = []
-    
     @_extensions["coffee"] = ""
-      
-  
-  include:(include)->
-    console.log "include : #{include}"
+    
+    @_ASTAnalyser = new ASTAnalyser()
+
+  include:( uri )->
+    console.log "include : #{uri}"
     
   importGeom:( uri )->
     console.log "import geometry at #{uri}"
+  
+  #STATIC method
+  @_load:(request, parent, isMain)=>
+    
+    fileName = @_resolveFileName()
+    module = new Module(filename, "", parent)
+    
+    if isMain
+      #TODO : flag this module as main somewhere?
+      module.id = '.'
+  
+    #TODO : load content ???
+    return module.exports
+  
+  _resolveFileName:( uri, parent)=>
+    
+  
+  ###*
+  * prepare the source for compiling : convert coffee->js if needed , inject dependencies etc
+  * @param {String} the original source code
+  * @return {String} the modified, possibly converted source code
+  ###
+  _prepareSource:( source )->
+    {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:"output.js"})
+    logger.debug("raw source",source)
+              
+    source = js 
+    
+    moduleId = "myFileName.coffee" #TODO: use actual file name
+    srcMap = JSON.parse( v3SourceMap )
+    #TODO: this needs to contain ALL included files
+    srcMap.sources = []
+    srcMap.sources.push( moduleId ) 
+    #srcMap.sourcesContent = [code.value];
+    srcMap.file = "toto"
+    datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap))
+    
+    source += "\n//@ sourceMappingURL=" + datauri
+
+    console.log "v3map2", srcMap
+    logger.debug "JSIFIED script"
+    logger.debug source
+    return source
+  
+  
+  ###*
+  * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
+  * 
+  ###
+  resolveImports:( importGeoms )=>
+    importDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in importGeoms)
+    logger.debug("Geometry import deferreds: #{importDeferreds.length}")
+    return Q.all(importDeferreds)
+
+  ###*
+  * pre fetch & cache "included" module (code import)
+  * 
+  ###
+  resolveIncludes:( includes )=>
+    includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
+    logger.debug("Include deferreds: #{includeDeferreds.length}")
+    return Q.all(includeDeferreds)
+  
+  
+  _analyseSource:( source )->
+    ast = esprima.parse(source, { range: false, loc: false , comment:false})
+
+    moduleData = @aSTAnalyser._walkAst( ast )
+    importDeferreds = @resolveImports( moduleData.importGeoms )
+    includeDeferreds = @resolveIncludes( moduleData.includes )
     
   compile:()->
     wrapped = @wrap(@content)
@@ -39,10 +119,7 @@ class CModule extends File
     #f = new Function(["module","assembly"], wrapper )
     #toto = f.apply(null, [module,assembly])
   
-  
-  eval:->
     
-  
   ###*
   * wraps module , injecting params such as exports, include/import/require method etc
   * 

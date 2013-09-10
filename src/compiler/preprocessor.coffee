@@ -13,7 +13,8 @@ Q = require("q")
 
 File = require "../io/file"
 ASTAnalyser = require "./astUtils"
-
+utils = require "../utils"
+btoa = utils.btoa
 
 #resources such as geometry (stl, amf, etc) , text files etc are LEAVES in the graph, no depency resolution is made from them
 #resource such as code (coffee, js, litcoffee, ultishape etc) can be either LEAVES (no dependencies) or not, but dependency resolution is ALWAYS done from them
@@ -130,14 +131,7 @@ class PreProcessor
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     return Q.all(includeDeferreds)
   
-  compile:()->
-    wrapped = @wrap(@content)
-        
-    f = new Function( wrapped )
-    fn = f()
-    
-    fn( @exports, @include, @, @fileName) 
-  
+
   ###* 
   * handle the other projects/files inclusion
   ###
@@ -234,15 +228,6 @@ class PreProcessor
     graph.overallOrder()
     graph.overallOrder(true)
 
-
-#TODO: how to handle these kind of things : not part of globals on NODE , but ok in browsers?
-btoa = (str) ->
-  buffer = undefined
-  if str instanceof Buffer
-    buffer = str
-  else
-    buffer = new Buffer(str.toString(), "binary")
-  buffer.toString "base64"
 
 
 module.exports = PreProcessor    
