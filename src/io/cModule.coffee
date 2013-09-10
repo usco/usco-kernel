@@ -17,26 +17,9 @@ btoa = utils.btoa
 * here is ported from node modules 
 ###
 class CModule extends File
-  constructor:(name, content, parent)->
-    super( name, content )
-    @exports = {}
-    
-    @loaded = false
-    @exports = {}
-    
-    @parent = null
-    @children = []
-    
-    @_extensions = []
-    @_extensions["coffee"] = ""
-    
-    @_ASTAnalyser = new ASTAnalyser()
-
-  include:( uri )->
-    console.log "include : #{uri}"
-    
-  importGeom:( uri )->
-    console.log "import geometry at #{uri}"
+  
+  @_extensions = [] #should this be in asset manager ?
+  @_extensions["coffee"] = ""
   
   #STATIC method
   @_load:(request, parent, isMain)=>
@@ -51,8 +34,24 @@ class CModule extends File
     #TODO : load content ???
     return module.exports
   
-  _resolveFileName:( uri, parent)=>
+  constructor:(name, content, parent)->
+    super( name, content )
+    @exports = {}
     
+    @loaded = false
+    @exports = {}
+    
+    @parent = null
+    @children = []
+    
+    @_ASTAnalyser = new ASTAnalyser()
+
+  
+  ###*
+  * convert relative to absolute file paths
+  * 
+  ###
+  _resolveFileName:( uri, parent)=>
   
   ###*
   * prepare the source for compiling : convert coffee->js if needed , inject dependencies etc
@@ -85,8 +84,9 @@ class CModule extends File
   ###*
   * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
   * 
+  * 
   ###
-  resolveImports:( importGeoms )=>
+  _resolveImports:( importGeoms )=>
     importDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in importGeoms)
     logger.debug("Geometry import deferreds: #{importDeferreds.length}")
     return Q.all(importDeferreds)
@@ -95,31 +95,42 @@ class CModule extends File
   * pre fetch & cache "included" module (code import)
   * 
   ###
-  resolveIncludes:( includes )=>
+  _resolveIncludes:( includes )=>
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     return Q.all(includeDeferreds)
+  
+  ###*
+  * add level 0 (script root) variable , method & class definitions to module.exports
+  * if the user has not defined exports itself, all the elements at script root get added to exports
+  * @param {String} rootElements the original source code
+  * @return {String} a string containing all added exports 
+  ###
+  _autoGenerateExports:( rootElements )=>
+    #generate auto exports script
+    autoExportsSrc = ""
+    autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
+    logger.debug("autoExports", autoExportsSrc) 
+    
+    return autoExportsSrc
   
   
   _analyseSource:( source )->
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
 
     moduleData = @aSTAnalyser._walkAst( ast )
-    importDeferreds = @resolveImports( moduleData.importGeoms )
-    includeDeferreds = @resolveIncludes( moduleData.includes )
-    
-  compile:()->
-    wrapped = @wrap(@content)
-        
-    f = new Function( wrapped )
-    fn = f()
-    
-    fn( @exports, @include, @importGeom @, @name)
-      
-    #f = new Function(["module","assembly"], wrapper )
-    #toto = f.apply(null, [module,assembly])
+    importDeferreds = @_resolveImports( moduleData.importGeoms )
+    includeDeferreds = @_resolveIncludes( moduleData.includes )
   
+  
+  ############################
+  
+  include:( uri )->
+    console.log "include : #{uri}"
     
+  importGeom:( uri )->
+    console.log "import geometry at #{uri}"
+  
   ###*
   * wraps module , injecting params such as exports, include/import/require method etc
   * 
@@ -133,3 +144,15 @@ class CModule extends File
      });
     """
     return wrapped
+  
+  compile:->
+    wrapped = @wrap(@content)
+        
+    f = new Function( wrapped )
+    fn = f()
+    
+    fn( @exports, @include, @importGeom @, @name)
+      
+    #f = new Function(["module","assembly"], wrapper )
+    #toto = f.apply(null, [module,assembly])
+  

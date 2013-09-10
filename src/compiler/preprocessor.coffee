@@ -103,15 +103,6 @@ class PreProcessor
     @_prevAst = jsonAst1
     return ast
     
-  ###*
-  * add level 0 (script root) variable , method & class definitions to module.exports
-  * 
-  ###
-  generateExports:( rootElements )=>
-    #generate auto exports script
-    autoExportsSrc = ""
-    autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
-    console.log(autoExportsSrc) 
   
   ###*
   * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
