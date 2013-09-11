@@ -1,15 +1,15 @@
 'use strict'
+assert = require('assert').ok
 CoffeeScript =  require('coffee-script')
 esprima = require "esprima"
 Q = require("q")
 
 logger = require("../../logger")
 logger.level = "debug"
-File = require './File'
-ASTAnalyser = require "./astUtils"
+File = require './file'
+ASTAnalyser = require "../compiler/astUtils"
 utils = require "../utils"
 btoa = utils.btoa
-
 
 
 ###* 
@@ -19,7 +19,6 @@ btoa = utils.btoa
 class CModule extends File
   
   @_extensions = [] #should this be in asset manager ?
-  @_extensions["coffee"] = ""
   
   #STATIC method
   @_load:(request, parent, isMain)=>
@@ -36,17 +35,15 @@ class CModule extends File
   
   constructor:(name, content, parent)->
     super( name, content )
-    @exports = {}
-    
-    @loaded = false
-    @exports = {}
-    
-    @parent = null
+    @parent = parent or null
     @children = []
     
+    @loaded =  false #if @content == null then false else true
+    @exports = {}
+    
     @_ASTAnalyser = new ASTAnalyser()
+    @assetManager = null
 
-  
   ###*
   * convert relative to absolute file paths
   * 
@@ -59,12 +56,17 @@ class CModule extends File
   * @return {String} the modified, possibly converted source code
   ###
   _prepareSource:( source )->
+    if not source?
+      throw new Error("No source provided.")
+    logger.debug("Preparing source")
+    #TODO: this coffeescript specific part should go into extension specific method
     {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:"output.js"})
     logger.debug("raw source",source)
               
     source = js 
     
-    moduleId = "myFileName.coffee" #TODO: use actual file name
+        
+    moduleId = @name #TODO: use actual file name
     srcMap = JSON.parse( v3SourceMap )
     #TODO: this needs to contain ALL included files
     srcMap.sources = []
@@ -72,13 +74,12 @@ class CModule extends File
     #srcMap.sourcesContent = [code.value];
     srcMap.file = "toto"
     datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap))
-    
-    source += "\n//@ sourceMappingURL=" + datauri
+    #source += "\n//@ sourceMappingURL=" + datauri
 
-    console.log "v3map2", srcMap
+    #console.log "v3map2", srcMap
     logger.debug "JSIFIED script"
     logger.debug source
-    return source
+    return {source:source,sourceMap:srcMap}
   
   
   ###*
@@ -114,14 +115,11 @@ class CModule extends File
     
     return autoExportsSrc
   
-  
   _analyseSource:( source )->
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
-
-    moduleData = @aSTAnalyser._walkAst( ast )
-    importDeferreds = @_resolveImports( moduleData.importGeoms )
-    includeDeferreds = @_resolveIncludes( moduleData.includes )
-  
+    moduleData = @_ASTAnalyser._walkAst( ast )
+    
+    return moduleData
   
   ############################
   
@@ -156,3 +154,38 @@ class CModule extends File
     #f = new Function(["module","assembly"], wrapper )
     #toto = f.apply(null, [module,assembly])
   
+  #temporary, just for tests
+  doAll:->
+    sourceData = @_prepareSource( @content )
+    moduleData = @_analyseSource(sourceData.source)
+    
+    importDeferreds = @_resolveImports( moduleData.importGeoms )
+    includeDeferreds = @_resolveIncludes( moduleData.includes )
+    
+    resourcesDeferred = Q.all([importDeferreds, includeDeferreds])
+    
+    finalDeferred = resourcesDeferred.spread((bla, bla2)=>
+      #TODO : yowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
+      #@cachedResources
+      console.log "bla", bla.length
+      console.log "bla2", bla2.length
+      
+      return "pouet"
+    )
+    
+    finalDeferred.then (res)->
+      console.log "i am here", res
+    
+    return 
+    
+  
+  ############################
+  #All things related to code re-write from "visual" here
+  ###TODO: 
+  1 - find point where object's last transform is present
+  2 - normalize transforms list (two translates in a row can be conbined, etc)
+  2.b - generate any other required code transforms
+  3 - inject code
+  ###
+
+module.exports = CModule

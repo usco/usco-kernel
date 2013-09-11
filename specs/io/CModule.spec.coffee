@@ -57,8 +57,11 @@ class Dummy
 
 dummy = new Dummy()
     """
-    module = new CModule("testFile.Coffe",source)
+    module = new CModule("testFile.Coffe", source)
+    module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
+    module.doAll()
     
+    done()
     ### 
     preprocessor.process( source )
     .then ( bla ) =>

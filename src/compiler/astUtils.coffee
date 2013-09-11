@@ -1,3 +1,6 @@
+logger = require("../../logger")
+logger.level = "debug"
+
 esprima = require "esprima"
 
 
@@ -34,7 +37,38 @@ class ASTAnalyser
       name = c.name
     #console.log "NODE", node, "callee",c, "Cname", name, "type",node.type, "name", node.name
     return (c and node.type == 'VariableDeclaration' and c.type == 'Identifier' and c.name == 'params')
-   
+  
+  
+  ###*
+  * Determine if current node is an instanciation
+  * @param {Object} node the AST node to test
+  * @return {boolean} true if node is a parameter node, false otherwise
+  ###  
+  isInstanciation:( node )->
+    #what = null
+    #if node.type == 'NewExpression'
+    #  what = node.callee.name
+    c = node.callee
+    #console.log("pouet", node.type == 'NewExpression')
+    return (c and node.type == 'NewExpression')
+    ###
+    "init": {
+                        "type": "NewExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "Dummy"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": 25,
+                                "raw": "25"
+                            }
+                        ]
+                    } 
+  
+    ###
+    
   ###*
   * Traverse the AST , analyse and spit out the needed information
   * @param {Object} ast the esprima generated AST
@@ -80,21 +114,25 @@ class ASTAnalyser
           rootElements.push( decName )
     
       if @isInclude( node )
-        console.log("IsInclude",node.arguments[0].value)
+        logger.debug("include",node.arguments[0].value)
         includes.push( node.arguments[0].value )
       
       if @isImportGeom( node )
-        console.log("IsImportGeom",node.arguments[0].value)
+        logger.debug("importGeom",node.arguments[0].value)
         importGeoms.push( node.arguments[0].value )
       
       if @isParams( node )
-        console.log("isParams",node.arguments[0].value)
+        logger.debug("params",node.arguments[0].value)
         params.push( node.arguments[0].value )
+        
+      if @isInstanciation( node )
+        console.log("node",node)
+        logger.debug("new instance of ",node.callee.name)
     
-    console.log("rootElements", rootElements)
-    console.log("includes",includes)
-    console.log("importGeoms",importGeoms)   
-    console.log("params",params)    
+    logger.debug("found rootElements", rootElements)
+    logger.debug("found includes",includes)
+    logger.debug("found importGeoms",importGeoms)   
+    logger.debug("found params",params)    
     
     return {rootElements:rootElements, includes:includes, importGeoms:importGeoms}
     
