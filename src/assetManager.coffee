@@ -119,7 +119,10 @@ class AssetManager
           @assetCache[ fileUri ] = loadedResource
           
         #and return it
-        deferred.resolve( loadedResource )  
+        #deferred.resolve( loadedResource )  
+        #alternative: can be practical so we can use the deferred directly : [fileUri, loadedResource]
+        deferred.resolve([fileUri, loadedResource])  
+        
        .fail (error) =>
          deferred.reject( error )
     else

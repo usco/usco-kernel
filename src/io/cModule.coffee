@@ -90,7 +90,9 @@ class CModule extends File
   _resolveImports:( importGeoms )=>
     importDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in importGeoms)
     logger.debug("Geometry import deferreds: #{importDeferreds.length}")
-    return Q.all(importDeferreds)
+    
+    return Q.allSettled(importDeferreds)
+    #return Q.all(importDeferreds)
 
   ###*
   * pre fetch & cache "included" module (code import)
@@ -99,7 +101,33 @@ class CModule extends File
   _resolveIncludes:( includes )=>
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
-    return Q.all(includeDeferreds)
+    return Q.allSettled(includeDeferreds)
+  
+  ###*
+  * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
+  * 
+  * 
+  ###
+  _resolveImports2:( importGeomsList )=>
+    console.log "importGeomsList",importGeomsList
+    imports = {}
+    for fileUri in importGeomsList
+      imports[fileUri] = @assetManager.loadResource( fileUri )
+    #imports = ({fileUri : @assetManager.loadResource( fileUri )} for fileUri in importGeoms)
+    logger.debug("Geometry imports : #{Object.keys(imports).length}" )
+    return imports
+
+  ###*
+  * pre fetch & cache "included" module (code import)
+  * 
+  ###
+  _resolveIncludes2:( includesList )=>
+    includes = {}
+    for fileUri in includesList
+      includes[fileUri] = @assetManager.loadResource( fileUri )
+    #includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
+    logger.debug("Includes: #{Object.keys(includes).length}")
+    return includes #Q.all(includeDeferreds)
   
   ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
@@ -159,14 +187,32 @@ class CModule extends File
     sourceData = @_prepareSource( @content )
     moduleData = @_analyseSource(sourceData.source)
     
+    ###
+    imports = @_resolveImports2( moduleData.importGeoms )
+    includes = @_resolveIncludes2( moduleData.includes )
+    console.log "imports", imports
+    console.log "includes", includes
+    #for uri, deferred of imports
+    ###
+    
+    onSuccess = (bla, bli)=>
+      console.log("on sucess",bla)
+      
+    onFailure = (bla, bli)=>
+      console.log("on fail",bla)  
+    
     importDeferreds = @_resolveImports( moduleData.importGeoms )
     includeDeferreds = @_resolveIncludes( moduleData.includes )
     
-    resourcesDeferred = Q.all([importDeferreds, includeDeferreds])
+    resourcesDeferred = Q.allSettled([importDeferreds, includeDeferreds])
+    
+    resourcesDeferred.then (res)->
+      console.log "i am here0", res
     
     finalDeferred = resourcesDeferred.spread((bla, bla2)=>
-      #TODO : yowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
+      #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
       #@cachedResources
+      console.log "bla0", bla[0][0]
       console.log "bla", bla.length
       console.log "bla2", bla2.length
       
@@ -175,9 +221,10 @@ class CModule extends File
     
     finalDeferred.then (res)->
       console.log "i am here", res
+   
+    return
     
-    return 
-    
+  
   
   ############################
   #All things related to code re-write from "visual" here
