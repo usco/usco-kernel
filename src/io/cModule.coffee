@@ -195,8 +195,15 @@ class CModule extends File
     #for uri, deferred of imports
     ###
     
-    onSuccess = (bla, bli)=>
-      console.log("on sucess",bla)
+    onSuccess = (importResults, includeResults)=>
+      console.log("importResults", importResults)
+      console.log("includeResults", includeResults)
+      for importResult in importResults.value
+        if "value" of importResult
+          console.log "import success", importResult.value
+        if "reason" of importResult
+          console.log "import failure", importResult.reason
+        
       
     onFailure = (bla, bli)=>
       console.log("on fail",bla)  
@@ -205,10 +212,9 @@ class CModule extends File
     includeDeferreds = @_resolveIncludes( moduleData.includes )
     
     resourcesDeferred = Q.allSettled([importDeferreds, includeDeferreds])
+    resourcesDeferred.spread(onSuccess, onFailure)
     
-    resourcesDeferred.then (res)->
-      console.log "i am here0", res
-    
+    ###
     finalDeferred = resourcesDeferred.spread((bla, bla2)=>
       #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
       #@cachedResources
@@ -220,7 +226,7 @@ class CModule extends File
     )
     
     finalDeferred.then (res)->
-      console.log "i am here", res
+      console.log "i am here", res###
    
     return
     
