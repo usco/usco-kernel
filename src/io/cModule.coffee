@@ -18,7 +18,9 @@ btoa = utils.btoa
 ###
 class CModule extends File
   
-  @_extensions = [] #should this be in asset manager ?
+  @_extensions : [] #should this be in asset manager ?
+  @_cache : {} #TODO: not good, redundant with asset manager
+  
   
   #STATIC method
   @_load:(request, parent, isMain)=>
@@ -152,85 +154,120 @@ class CModule extends File
   ############################
   
   include:( uri )->
-    console.log "include : #{uri}"
-    
+    logger.debug "within script: include from #{uri}"
+    resource = CModule._cache[uri]
+    return resource
+  
+  ###*
+  * method that gets "injected" into modules source, the one that actually is called
+  * currently it is one big hack : needed resources have already been loaded (async) when this method
+  * can get called, thus this one only returns (sync) data from cache :
+  * @return {Object} either the loaded resource, or an error instance, indicated why loading it failed
+  ###
   importGeom:( uri )->
-    console.log "import geometry at #{uri}"
+    logger.debug "within script:  import geometry from #{uri}"
+    resource = CModule._cache[uri]
+    if resource instanceof Error
+      throw resource
+    return resource
   
   ###*
   * wraps module , injecting params such as exports, include/import/require method etc
   * 
   ###
   wrap:(script)->
+    #TODO : what should be wrap: original code or converted ?
+    #more likely the modified one, as this changes the ast?
     wrapped = """
     return (function ( exports, include, importGeom,  module, __filename)
     {
+      //console.log("include",include,"importGeom",importGeom);
       #{script}
-      console.log("exports",exports, "module",module);
+      
+      
      });
     """
+    ##{@autoExports}@autoExports+ #YUCK !!! TODO: better way to do this
     return wrapped
   
-  compile:->
-    wrapped = @wrap(@content)
-        
-    f = new Function( wrapped )
-    fn = f()
+  compile:( source )=>
+    logger.info("compiling module #{@name}")
+    wrapped = @wrap(source) 
+    logger.debug("wrapped", wrapped)
     
-    fn( @exports, @include, @importGeom @, @name)
-      
+    fn = null
+    try
+      f = new Function( wrapped )
+      fn = f()
+      logger.debug("============START MODULE===============")
+      res = fn( @exports, @include, @importGeom, @, @name)
+      logger.debug("============END   MODULE===============")
+      logger.error("Module exports", @exports)
+      console.log @exports
+    catch error
+      logger.error("Compiling module #{@name} failed: #{error}")
     #f = new Function(["module","assembly"], wrapper )
     #toto = f.apply(null, [module,assembly])
+    
+    logger.info("done compiling module #{@name}")
+    return fn
   
   #temporary, just for tests
   doAll:->
     sourceData = @_prepareSource( @content )
     moduleData = @_analyseSource(sourceData.source)
     
-    ###
-    imports = @_resolveImports2( moduleData.importGeoms )
-    includes = @_resolveIncludes2( moduleData.includes )
-    console.log "imports", imports
-    console.log "includes", includes
-    #for uri, deferred of imports
-    ###
+    #TODO: errmm not sure where this should be: it needs moduleData, but should also be part of the source
+    @autoExports = @_autoGenerateExports( moduleData.rootElements )
     
     onSuccess = (importResults, includeResults)=>
-      console.log("importResults", importResults)
-      console.log("includeResults", includeResults)
+      console.log("imports, includes ok")
+      #console.log("importResults", importResults)
+      #console.log("includeResults", includeResults)
       for importResult in importResults.value
         if "value" of importResult
-          console.log "import success", importResult.value
+          value = importResult.value
+          uri = value[0]
+          resource = value[1]
+          CModule._cache[uri] = resource
+          #console.log "import success", uri, 
+          
         if "reason" of importResult
-          console.log "import failure", importResult.reason
+          #HAAACKK !
+          reason = importResult.reason
+          uri = reason[0]
+          error = reason[1]
+          
+          #console.log "import failure", uri, reason
+          CModule._cache[uri] = error
+          
+      #console.log "Cache:\n",CModule._cache
+      d = Q.defer()
+      
+      d.resolve()
+      return d.promise
+          
         
       
     onFailure = (bla, bli)=>
       console.log("on fail",bla)  
     
+    #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
+    
     importDeferreds = @_resolveImports( moduleData.importGeoms )
     includeDeferreds = @_resolveIncludes( moduleData.includes )
     
-    resourcesDeferred = Q.allSettled([importDeferreds, includeDeferreds])
-    resourcesDeferred.spread(onSuccess, onFailure)
+    resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
+    allLoadedPromise = resourcesPromise.spread(onSuccess, onFailure)
     
-    ###
-    finalDeferred = resourcesDeferred.spread((bla, bla2)=>
-      #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
-      #@cachedResources
-      console.log "bla0", bla[0][0]
-      console.log "bla", bla.length
-      console.log "bla2", bla2.length
-      
-      return "pouet"
-    )
-    
-    finalDeferred.then (res)->
-      console.log "i am here", res###
+
+    allLoadedPromise.then ()=>
+      console.log "i am here sdf"
+      fn = @compile(sourceData.source)
+      #toto = fn()
+      #console.log("module wrap",fn)
    
     return
-    
-  
   
   ############################
   #All things related to code re-write from "visual" here

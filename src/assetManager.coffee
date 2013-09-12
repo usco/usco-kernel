@@ -101,8 +101,6 @@ class AssetManager
     
     if not (filename of @assetCache)
       extension = filename.split(".").pop()
-      #console.log "parsers", @parsers, "extension", extension, "store",storeName
-      
       #load raw data from file, get a deferred
       loaderDeferred = store.loadFile(filename)
       
@@ -120,11 +118,12 @@ class AssetManager
           
         #and return it
         #deferred.resolve( loadedResource )  
-        #alternative: can be practical so we can use the deferred directly : [fileUri, loadedResource]
+        #TODO: alternative: can be practical so we can use the deferred directly : [fileUri, loadedResource]
         deferred.resolve([fileUri, loadedResource])  
         
        .fail (error) =>
-         deferred.reject( error )
+         #TODO: alternative: can be practical so we can use the deferred directly : [fileUri, loadedResource]
+         deferred.reject( [fileUri, error] )
     else
       #the resource was already loaded, return it 
       loadedResource = @assetCache[filename]

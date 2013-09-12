@@ -54,29 +54,42 @@ class Dummy
     tmpVar = "my tailor is not so rich"
     subGeom = importGeom("dummy:specs/data/cube.stl")
     subGeom2 = importGeom("dummy:specs/data/cube.stl")
+    subGeom3 = importGeom("dummy:specs/data/pointedStick.stl")
 
 dummy = new Dummy()
     """
     #this one has an intentional bad resource
     source = """
-params 
 include("dummy:specs/data/test.coffee")
+params = "test"
 
 variable = 42
 method= (param)->
-  console.log("param",param);
-
+  console.log("param",param)
+  
 class Dummy
   constructor:->
     @myVar = 42
     tmpVar = "my tailor is not so rich"
     subGeom = importGeom("dummy:specs/data/cube.stl")
-    subGeom2 = importGeom("dummy:specs/data/cube.stl")
-    subGeom3 = importGeom("dummy:specs/data/pointedStick.stl")
 
 dummy = new Dummy()
     """
-    
+    source = """
+include("dummy:specs/data/test.coffee")
+try
+  subGeom3 = importGeom("dummy:specs/data/pointedStick.stl")
+  console.log "bla", subGeom3
+catch error
+  console.log "error", error
+
+
+exports.toto = "402"
+exports = "bla"
+
+exports = "abraca 401"
+module.exports = "jesus"
+    """
     module = new CModule("testFile.Coffe", source)
     module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
     module.doAll()

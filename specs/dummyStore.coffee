@@ -10,7 +10,7 @@ class DummyStore
     deferred = Q.defer()
     
     if not fs.existsSync( uri )
-      deferred.reject( "#{uri} not found" )
+      deferred.reject( new Error("#{uri} not found") )
     
     else
       #stats = fs.lstatSync(uri)
