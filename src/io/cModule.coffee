@@ -179,11 +179,10 @@ class CModule extends File
     #TODO : what should be wrap: original code or converted ?
     #more likely the modified one, as this changes the ast?
     wrapped = """
-    return (function ( exports, include, importGeom,  module, __filename)
+    return (function ( exports, include, importGeom, module, __filename)
     {
       //console.log("include",include,"importGeom",importGeom);
       #{script}
-      
       
      });
     """
@@ -233,7 +232,6 @@ class CModule extends File
           #console.log "import success", uri, 
           
         if "reason" of importResult
-          #HAAACKK !
           reason = importResult.reason
           uri = reason[0]
           error = reason[1]
@@ -255,6 +253,8 @@ class CModule extends File
     #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
     
     importDeferreds = @_resolveImports( moduleData.importGeoms )
+    
+    #TODO: includes need to import/compile/get exports
     includeDeferreds = @_resolveIncludes( moduleData.includes )
     
     resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
@@ -263,9 +263,14 @@ class CModule extends File
 
     allLoadedPromise.then ()=>
       console.log "i am here sdf"
-      fn = @compile(sourceData.source)
-      #toto = fn()
-      #console.log("module wrap",fn)
+      
+      #load module
+      #compile module
+      #return exports
+      @compile(sourceData.source)
+      console.log "exports", @exports
+      return @exports
+      
    
     return
   

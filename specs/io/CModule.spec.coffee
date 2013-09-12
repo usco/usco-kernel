@@ -83,12 +83,9 @@ try
 catch error
   console.log "error", error
 
-
 exports.toto = "402"
-exports = "bla"
-
-exports = "abraca 401"
-module.exports = "jesus"
+exports.toto = "abraca 401"
+exports = module.exports = "yeaaha"
     """
     module = new CModule("testFile.Coffe", source)
     module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
