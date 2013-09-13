@@ -1,94 +1,40 @@
 Q = require("q")
-XMLHttpRequest = require("w3c-xmlhttprequest").XMLHttpRequest
+http = require('https')
+fs = require("fs")
+path = require("path")
+#mocking http requrest via  with https://github.com/flatiron/nock
+nock = require("nock")
 
+mockData = path.resolve("./specs/data/femur.stl")
+nock.disableNetConnect()
+nock("https://raw.github.com").get('/kaosat-dev/repBug/master/cad/stl/femur.stl')
+.times(4)
+.reply(200,fs.readFileSync(mockData))
+
+
+#TODO: handle progress , errors
 class DummyXHRStore
+  
   loadFile:( uri )=>
-    request = new XMLHttpRequest()
     deferred = Q.defer()
-    #console.log("attempting to load",uri)
+   
+    onLoad= ( res )=>
+      final = ''
+      #console.log "xhr success", event.target.responseText[0]+ event.target.responseText[1]+event.target.responseText[2]+event.target.responseText[3]
+      res.on('data',(data)->
+        final += data
+      )
+      
+      res.on('end',()->
+        #console.log "result", final
+        deferred.resolve( final )
+      )
     
-    request.open( 'GET', uri, true );
-    
-    onLoad= ( event )=>
-      #console.log "xhr success", event.target.responseText
-      deferred.resolve(event.target.responseText);
-    
-    onProgress= ( event )=>
-      if (event.lengthComputable)
-        percentComplete = (event.loaded/event.total)*100
-        console.log "percent", percentComplete
-    
-    onError= ( event )=>
-      console.log("errorblah", event)
-      deferred.reject(event);
-    
-    onXhrChange= (event)=>
-      #console.log "xhr ready state",request.readyState
-      #if (request.readyState is 4)
-      #  console.log "pouet"
-      #  console.log("Complete.\nBody length: " + request.responseText.length);
-      #  console.log("Body:\n" + request.responseText);
-    
-    request.addEventListener 'load', onLoad, false
-    request.addEventListener 'loadend', onLoad, false
-    request.addEventListener 'progress', onProgress, false
-    request.addEventListener 'error', onError, false
-    request.addEventListener 'readystatechange', onXhrChange, false
-    
-    request.send()
-    
-    return deferred.promise;    
-    
-    
+    req = http.get(uri, onLoad)
+    return deferred.promise
+
+nock.enableNetConnect()    
     
 module.exports = DummyXHRStore
-### 
-    if ( onLoad !== undefined ) {
 
-      request.addEventListener( 'load', function ( event ) {
-
-        onLoad( event.target.responseText );
-        scope.manager.itemEnd( url );
-
-      }, false );
-
-    }
-
-    if ( onProgress !== undefined ) {
-
-      request.addEventListener( 'progress', function ( event ) {
-
-        onProgress( event );
-
-      }, false );
-
-    }
-
-    if ( onError !== undefined ) {
-
-      request.addEventListener( 'error', function ( event ) {
-
-        onError( event );
-
-      }, false );
-
-    }
-
-    if ( this.crossOrigin !== undefined ) request.crossOrigin = this.crossOrigin;
-
-    request.open( 'GET', url, true );
-    request.send( null );
-
-    scope.manager.itemStart( url );
-
-  },
-
-  setCrossOrigin: function ( value ) {
-
-    this.crossOrigin = value;
-
-  }
-
-};
-###
 

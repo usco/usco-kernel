@@ -31,7 +31,9 @@
     "xmlhttprequest": "~1.6.0",
     "uglify-js": "~2.4.0",
     "w3c-xmlhttprequest": "~1.1.0",
-    "logerize": "0.0.2"
+    "logerize": "0.0.2",
+    "esgraph": "~0.1.0",
+    "nock": "~0.22.1"
   },
   "scripts": {
     "test": "jasmine-node --coffee specs/",

@@ -1,4 +1,5 @@
 'use strict'
+path = require('path')
 Q = require("q")
 logger = require("../logger")
 logger.level = "debug"
@@ -22,9 +23,9 @@ class AssetManager
   	#where BEFORE asking the asset manager to load anything
   	@currentLocation = ""
       
-  _parseFileUri: ( fileUri, parentUri )->
+  _parseFileUri: ( fileUri )->
     #extract store, file path etc
-    logger.debug "extracting store from", fileUri
+    #logger.debug "extracting store from", fileUri
     url = require('url')
     pathInfo = url.parse( fileUri )
     storeName = pathInfo.protocol
@@ -49,20 +50,27 @@ class AssetManager
     
     segments = fileName.split( "/" )
     if segments[0] != '.' and segments[0] != '..'
-      logger.debug("absolute path")
+      logger.debug("fullPath (from absolute)", fileName)
       return fileName
-      
-    logger.debug("relative path")
+    
+    logger.debug("relative path: ", fileName)
     #path is relative
     rootUri = parentUri or store.rootUri or ""
-    logger.debug("rootUri", rootUri)
+    fileName = path.normalize(fileName)
+    isXHr = rootUri.indexOf("http") isnt -1
     
-    normalized = path.normalize( fileName )
-    fullPath = path.resolve( rootUri, fileName )
-    fullPath2 = path.join( rootUri, normalized )
-    #logger.debug("Normalized", normalized)
-    logger.debug("fullPath", fullPath)
-    #logger.debug("fullPath2", fullPath2)
+    #TODO: this explains WHY it would be a good idea to have path resolving done on a PER STORE basis
+    if isXHr
+      fullPath = rootUri + fileName
+    else
+      #hack to force dirname to work on paths ending with slash
+      rootUri = if rootUri[rootUri.length-1] == "/" then rootUri +="a" else rootUri
+      rootUri = path.normalize(rootUri)
+      rootUri = path.dirname(rootUri)
+      fullPath = path.join( rootUri, fileName )
+      
+      
+    logger.debug("fullPath (from relative)", fullPath)
     
     return fullPath
   
@@ -86,7 +94,10 @@ class AssetManager
     
     if not fileUri?
       throw new Error( "Invalid file name : #{fileUri}" )
-      
+     
+    #resolve full path
+    fileUri = @_toAbsoluteUri(fileUri, parentUri)
+    
     [storeName,filename] = @_parseFileUri( fileUri, parentUri)
     logger.debug( "Looking for filename", filename,  "in ", storeName )
     
@@ -95,8 +106,6 @@ class AssetManager
     if not store
       throw new Error("No store named #{storeName}")
     
-    #resolve full path
-    filename = @_toAbsoluteUri(filename, parentUri, store)
     
     
     if not (filename of @assetCache)

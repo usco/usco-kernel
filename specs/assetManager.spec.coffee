@@ -36,23 +36,32 @@ describe "AssetManager", ->
       done()
   , 400
 
-  it 'can resolve absolute and relative file paths',(done)->
+  it 'can resolve absolute and relative file paths, from different stores',(done)->
     assetManager.addParser("stl", STLParser)
 
-    #relative    
+    #relative, dummy store
     stores["dummy"].rootUri = path.resolve("./specs")
-    fileUri = "dummy:./data/cube.stl"
-    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+    fileUri = "./data/cube.stl"
+    assetManager.loadResource( fileUri,false, "dummy:specs/" ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
-      done()
     
-    #absolute
+    #absolute, dummy store
     fullPath = path.resolve("./specs/data/cube.stl")
     fileUri = "dummy:#{fullPath}"
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
+    
+    #relative, remote store
+    fileUri = "./femur.stl"
+    assetManager.loadResource( fileUri,false, "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/" ).done ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)
+    
+    #absolute, remote store
+    fileUri = "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl"
+    assetManager.loadResource( fileUri ).done ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)
       done()
-  , 400
+  , 1000
     
   
   it 'can load resources from different stores',(done)->
