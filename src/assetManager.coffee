@@ -15,8 +15,8 @@ class AssetManager
   	@parsers = {}
   	@assetCache = {}
   	
-  	#extensions of code file names (do not need parsing)
-  	@codeExtensions = ["coffee","litcoffee","ultishape"]
+  	#extensions of code file names (do not need parsing, but more complex evaluating !!)
+  	@codeExtensions = ["coffee","litcoffee","ultishape","scad"]
   	
   	#for relative paths: needs full uri (store included)
   	#TODO: maybe this is not needed, full paths should be resolved else

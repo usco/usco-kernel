@@ -37,7 +37,7 @@
   },
   "scripts": {
     "test": "jasmine-node --coffee specs/",
-    "start": "beefy --live src/kernel.coffee:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify & jasmine-node specs/ --coffee --autotest --watch src",
+    "start": "beefy --live src/kernel.coffee:coffeescad-kernel.js 9080 -- --extension '.coffee' -t coffeeify & jasmine-node specs/ --color --verbose --coffee --autotest --watch src",
     "release": "browserify src/kernel.coffee -t coffeeify --extension '.coffee' | uglifyjs -c > bundle.js"
   }
 }

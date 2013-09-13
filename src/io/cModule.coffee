@@ -11,6 +11,7 @@ ASTAnalyser = require "../compiler/astUtils"
 
 utils = require "../utils"
 btoa = utils.btoa
+merge = utils.merge
 
 
 ###* 
@@ -173,9 +174,14 @@ class CModule extends File
   ###Methods that get injected into evaled module code###
   
   
-  include:( uri )->
+  include:( uri )=>
+    #TODO: do module loading here ?
     logger.debug "within script: include from #{uri}"
+    uri = @assetManager._toAbsoluteUri( uri, @name ) #TODO : (YUCK usage of private method) !!!! we are getting RESOLVED uri's back, so all previously relative paths are absolute!
     resource = CModule._cache[uri]
+    if resource instanceof Error
+      console.log "otototototo"
+      throw resource
     return resource
   
   ###*
@@ -252,24 +258,32 @@ class CModule extends File
       console.log("imports, includes ok")
       #console.log("importResults", importResults)
       #console.log("includeResults", includeResults)
-      for importResult in importResults.value
-        if "value" of importResult
+      #importsIncludes = merge( importResults, includeResults )
+      
+      importsIncludes = importResults.value.concat( includeResults.value)
+      #console.log "importsIncludes", importsIncludes
+      
+      
+      for importResult in importsIncludes
+        #console.log "pouet", importResult
+        if importResult.state is "fulfilled"
           value = importResult.value
           uri = value[0]
           resource = value[1]
           CModule._cache[uri] = resource
-          #console.log "import success", uri, 
+          console.log "import success", uri, 
           
-        if "reason" of importResult
+        if importResult.state is "rejected"
           reason = importResult.reason
-          uri = reason[0]
+          uri =  reason[0] 
           error = reason[1]
           
-          #console.log "import failure", uri, reason
+          console.log "import failure", uri, reason
           CModule._cache[uri] = error
           
       #console.log "Cache:\n",CModule._cache
-      d = Q.defer().resolve()
+      d = Q.defer()
+      d.resolve()
       return d.promise
       
     onFailure = (bla, bli)=>
@@ -285,7 +299,7 @@ class CModule extends File
     resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
     allLoadedPromise = resourcesPromise.spread(onSuccess, onFailure)
     
-    allLoadedPromise.then ()=>
+    finalPromise = allLoadedPromise.then ()=>
       console.log "i am here sdf"
       
       #load module
@@ -295,7 +309,7 @@ class CModule extends File
       console.log "exports", @exports
       return @exports
    
-    return
+    return finalPromise
   
   ############################
   #All things related to code re-write from "visual" here
