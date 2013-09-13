@@ -76,7 +76,10 @@ class Dummy
 dummy = new Dummy()
     """
     source = """
+
 include("dummy:specs/data/test.coffee")
+include("./anotherTest.coffe")
+
 try
   subGeom3 = importGeom("dummy:specs/data/pointedStick.stl")
   console.log "bla", subGeom3
@@ -87,9 +90,13 @@ exports.toto = "402"
 exports.toto = "abraca 401"
 exports = module.exports = "yeaaha"
     """
-    module = new CModule("testFile.Coffe", source)
+    #
+    #import toto from "tata"
+    module = new CModule("dummy:specs/data/testFile.Coffe", source)
     module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
     module.doAll()
+    
+    #CModule._load("testFile.Coffe")
     
     done()
     ### 

@@ -8,6 +8,7 @@ logger = require("../../logger")
 logger.level = "debug"
 File = require './file'
 ASTAnalyser = require "../compiler/astUtils"
+
 utils = require "../utils"
 btoa = utils.btoa
 
@@ -21,6 +22,7 @@ class CModule extends File
   @_extensions : [] #should this be in asset manager ?
   @_cache : {} #TODO: not good, redundant with asset manager
   
+  @coreModules : {} #these are predefined modules , that can be "included"/"required" by the various modules TODO: how to handle this ?
   
   #STATIC method
   @_load:(request, parent, isMain)=>
@@ -34,6 +36,10 @@ class CModule extends File
   
     #TODO : load content ???
     return module.exports
+    
+  @_extensions["coffee"] = (module, fileName)->
+    content = ""
+    @compile(content, filename)
   
   constructor:(name, content, parent)->
     super( name, content )
@@ -61,13 +67,16 @@ class CModule extends File
     if not source?
       throw new Error("No source provided.")
     logger.debug("Preparing source")
+    
+    #we have to do this hack as coffeescript reserved the "import" keyword
+    #TODO: FUTURE: this is for replacing include / importGeom with a single "import statement", semi harmony compatible
+    #source = source.replace("import", "include")
+    
     #TODO: this coffeescript specific part should go into extension specific method
-    {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:"output.js"})
-    logger.debug("raw source",source)
-              
+    {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:@name})
+    logger.debug("raw source:\n",source)
     source = js 
     
-        
     moduleId = @name #TODO: use actual file name
     srcMap = JSON.parse( v3SourceMap )
     #TODO: this needs to contain ALL included files
@@ -90,7 +99,7 @@ class CModule extends File
   * 
   ###
   _resolveImports:( importGeoms )=>
-    importDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in importGeoms)
+    importDeferreds = (@assetManager.loadResource( fileUri, false, @name  ) for fileUri in importGeoms)
     logger.debug("Geometry import deferreds: #{importDeferreds.length}")
     
     return Q.allSettled(importDeferreds)
@@ -101,9 +110,18 @@ class CModule extends File
   * 
   ###
   _resolveIncludes:( includes )=>
-    includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
+    includeDeferreds = (@assetManager.loadResource( fileUri, false, @name ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     return Q.allSettled(includeDeferreds)
+  
+  _resolveIncludesFull:( includes )=>
+    includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
+    logger.debug("Include deferreds: #{includeDeferreds.length}")
+    
+    d = Q.allSettled(includeDeferreds)
+    d.then (includes)=>
+      
+    
   
   ###*
   * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
@@ -152,6 +170,8 @@ class CModule extends File
     return moduleData
   
   ############################
+  ###Methods that get injected into evaled module code###
+  
   
   include:( uri )->
     logger.debug "within script: include from #{uri}"
@@ -171,6 +191,7 @@ class CModule extends File
       throw resource
     return resource
   
+  
   ###*
   * wraps module , injecting params such as exports, include/import/require method etc
   * 
@@ -179,13 +200,18 @@ class CModule extends File
     #TODO : what should be wrap: original code or converted ?
     #more likely the modified one, as this changes the ast?
     wrapped = """
-    return (function ( exports, include, importGeom, module, __filename)
+    return (function ( exports, include, importGeom, module, assembly, __filename)
     {
       //console.log("include",include,"importGeom",importGeom);
+      //clear log entries
+      log = {}
+      log.entries = []
+      
       #{script}
       
      });
     """
+    #TODO: add log , etc to includables (ie useable by include method above)
     ##{@autoExports}@autoExports+ #YUCK !!! TODO: better way to do this
     return wrapped
   
@@ -194,12 +220,15 @@ class CModule extends File
     wrapped = @wrap(source) 
     logger.debug("wrapped", wrapped)
     
+    #TODO: should this be here:
+    @assembly = {}
+    
     fn = null
     try
       f = new Function( wrapped )
       fn = f()
       logger.debug("============START MODULE===============")
-      res = fn( @exports, @include, @importGeom, @, @name)
+      res = fn( @exports, @include, @importGeom, @, @assembly, @name)
       logger.debug("============END   MODULE===============")
       logger.error("Module exports", @exports)
       console.log @exports
@@ -240,12 +269,8 @@ class CModule extends File
           CModule._cache[uri] = error
           
       #console.log "Cache:\n",CModule._cache
-      d = Q.defer()
-      
-      d.resolve()
+      d = Q.defer().resolve()
       return d.promise
-          
-        
       
     onFailure = (bla, bli)=>
       console.log("on fail",bla)  
@@ -260,7 +285,6 @@ class CModule extends File
     resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
     allLoadedPromise = resourcesPromise.spread(onSuccess, onFailure)
     
-
     allLoadedPromise.then ()=>
       console.log "i am here sdf"
       
@@ -270,7 +294,6 @@ class CModule extends File
       @compile(sourceData.source)
       console.log "exports", @exports
       return @exports
-      
    
     return
   
