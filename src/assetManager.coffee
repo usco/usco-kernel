@@ -2,7 +2,7 @@
 path = require('path')
 Q = require("q")
 logger = require("../logger")
-logger.level = "debug"
+logger.level = "info"
 
 ###*
  *Manager for lifecyle of assets: load, store unload 
@@ -53,7 +53,7 @@ class AssetManager
       logger.debug("fullPath (from absolute)", fileName)
       return fileName
     
-    logger.debug("relative path: ", fileName)
+    #logger.debug("relative path: ", fileName)
     #path is relative
     rootUri = parentUri or store.rootUri or ""
     fileName = path.normalize(fileName)
@@ -99,7 +99,7 @@ class AssetManager
     fileUri = @_toAbsoluteUri(fileUri, parentUri)
     
     [storeName,filename] = @_parseFileUri( fileUri, parentUri)
-    logger.debug( "Looking for filename", filename,  "in ", storeName )
+    logger.info( "Attempting to load :", filename,  "from store:", storeName )
     
     #get store instance , if it exists
     store = @stores[ storeName ]

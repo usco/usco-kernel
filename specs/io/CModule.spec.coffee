@@ -78,26 +78,30 @@ dummy = new Dummy()
     source = """
 
 #include("dummy:specs/data/test.coffee")
-include("./anotherTest.coffe")
+#include("./anotherTest.coffe")
+otherModuleResult = include("./test.coffee")
 
-###
+console.log "include result", otherModuleResult
+
+foo = otherModuleResult + 42
+
 try
   subGeom3 = importGeom("dummy:specs/data/pointedStick.stl")
   console.log "bla", subGeom3
 catch error
   console.log "error", error
 
-exports.toto = "402"
-exports.toto = "abraca 401"
-exports = module.exports = "yeaaha"###
+exports = module.exports = foo
     """
     #
     #import toto from "tata"
-    module = new CModule("dummy:specs/data/testFile.coffee", source)
+    module = new CModule("dummy:specs/data/main.coffee", source)
     module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
-    module.doAll().done ( bla ) =>
+    module.doAll().done ( exports ) =>
+      expect( exports ).toEqual ( 287 )
+      console.log("exports", exports)
       done()
-    
+
     #CModule._load("testFile.Coffe")
     
     ### 
@@ -109,3 +113,4 @@ exports = module.exports = "yeaaha"###
       expect(false).toBeTruthy error.message
       done()
     ###
+  , 10000

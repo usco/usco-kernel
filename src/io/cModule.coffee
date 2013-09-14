@@ -14,6 +14,7 @@ btoa = utils.btoa
 merge = utils.merge
 
 
+
 ###* 
 * Coffeescad module : it is NOT a node.js module, although its purpose is similar, and a part of the code
 * here is ported from node modules 
@@ -28,7 +29,7 @@ class CModule extends File
   #STATIC method
   @_load:(request, parent, isMain)=>
     
-    fileName = @_resolveFileName()
+    #fileName = @_resolveFileName()
     module = new Module(filename, "", parent)
     
     if isMain
@@ -52,6 +53,7 @@ class CModule extends File
     
     @_ASTAnalyser = new ASTAnalyser()
     @assetManager = null
+    
 
   ###*
   * convert relative to absolute file paths
@@ -75,7 +77,7 @@ class CModule extends File
     
     #TODO: this coffeescript specific part should go into extension specific method
     {js, v3SourceMap, sourceMap} = CoffeeScript.compile(source, {bare: true,sourceMap:true,filename:@name})
-    logger.debug("raw source:\n",source)
+    #logger.debug("raw source:\n",source)
     source = js 
     
     moduleId = @name #TODO: use actual file name
@@ -89,8 +91,8 @@ class CModule extends File
     #source += "\n//@ sourceMappingURL=" + datauri
 
     #console.log "v3map2", srcMap
-    logger.debug "JSIFIED script"
-    logger.debug source
+    #logger.debug "JSIFIED script"
+    #logger.debug source
     return {source:source,sourceMap:srcMap}
   
   
@@ -113,16 +115,26 @@ class CModule extends File
   _resolveIncludes:( includes )=>
     includeDeferreds = (@assetManager.loadResource( fileUri, false, @name ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
-    return Q.allSettled(includeDeferreds)
+    
+    #TODO: remove, temporary
+    if includes.length >0
+      bla = @loadModule( includes[0] , @ )
+      console.log "POUET"
+      return Q.allSettled( [bla] )
+    else
+      d = Q.defer()
+      p = d.promise
+      d.resolve()
+      return Q.allSettled( [p] )
+    #return Q.allSettled(includeDeferreds)
   
   _resolveIncludesFull:( includes )=>
+    console.log "lkjlkj"
     includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     
     d = Q.allSettled(includeDeferreds)
     d.then (includes)=>
-      
-    
   
   ###*
   * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
@@ -171,8 +183,36 @@ class CModule extends File
     return moduleData
   
   ############################
-  ###Methods that get injected into evaled module code###
+  loadModule:( request, parent, isMain )=>
+    fileName = request
+    isMain = isMain or false
+    logger.info( "Loading module", fileName )
+    
+    exportsDeferred = Q.defer()
+    
+    contentPromise = @assetManager.loadResource(fileName, false, parent.name)
+    
+    contentPromise.then (content) =>
+      logger.info("module content loaded", content)
+      fileName = content[0]
+      fileContent = content[1]
+      module = new CModule(fileName, fileContent, @)
+      module.assetManager = @assetManager
+      @children.push(module)
+      bla = module.doAll()
+      bla.then ( exports ) =>
+        console.log "in caller : exports", exports
+        exportsDeferred.resolve( [fileName, exports] )
+    ###
+    if isMain
+      #TODO : flag this module as main somewhere?
+      module.id = '.'###
   
+    return exportsDeferred.promise
+  
+  
+  ############################
+  ###Methods that get injected into evaled module code###
   
   include:( uri )=>
     #TODO: do module loading here ?
@@ -180,8 +220,8 @@ class CModule extends File
     uri = @assetManager._toAbsoluteUri( uri, @name ) #TODO : (YUCK usage of private method) !!!! we are getting RESOLVED uri's back, so all previously relative paths are absolute!
     resource = CModule._cache[uri]
     if resource instanceof Error
-      console.log "otototototo"
       throw resource
+    logger.debug "include result",CModule._cache
     return resource
   
   ###*
@@ -224,7 +264,7 @@ class CModule extends File
   compile:( source )=>
     logger.info("compiling module #{@name}")
     wrapped = @wrap(source) 
-    logger.debug("wrapped", wrapped)
+    #logger.debug("wrapped", wrapped)
     
     #TODO: should this be here:
     @assembly = {}
@@ -233,11 +273,10 @@ class CModule extends File
     try
       f = new Function( wrapped )
       fn = f()
-      logger.debug("============START MODULE===============")
+      logger.debug("============START MODULE #{@name}===============")
       res = fn( @exports, @include, @importGeom, @, @assembly, @name)
-      logger.debug("============END   MODULE===============")
-      logger.error("Module exports", @exports)
-      console.log @exports
+      logger.debug("============END   MODULE #{@name}===============")
+      logger.error("Module #{@name} EXPORTS:", @exports)
     catch error
       logger.error("Compiling module #{@name} failed: #{error}")
     #f = new Function(["module","assembly"], wrapper )
@@ -255,7 +294,7 @@ class CModule extends File
     @autoExports = @_autoGenerateExports( moduleData.rootElements )
     
     onSuccess = (importResults, includeResults)=>
-      console.log("imports, includes ok")
+      #console.log("imports, includes ok")
       #console.log("importResults", importResults)
       #console.log("includeResults", includeResults)
       #importsIncludes = merge( importResults, includeResults )
@@ -268,19 +307,22 @@ class CModule extends File
         #console.log "pouet", importResult
         if importResult.state is "fulfilled"
           value = importResult.value
-          uri = value[0]
-          resource = value[1]
-          CModule._cache[uri] = resource
-          console.log "import success", uri, 
+          if value?
+            uri = value[0]
+            resource = value[1]
+            CModule._cache[uri] = resource
+            #console.log "import success", uri
           
         if importResult.state is "rejected"
           reason = importResult.reason
-          uri =  reason[0] 
-          error = reason[1]
-          
-          console.log "import failure", uri, reason
-          CModule._cache[uri] = error
-          
+          if reason?
+            uri =  reason[0] 
+            error = reason[1]
+            
+            #console.log "import failure", uri, reason
+            CModule._cache[uri] = error
+      
+        
       #console.log "Cache:\n",CModule._cache
       d = Q.defer()
       d.resolve()
@@ -296,17 +338,16 @@ class CModule extends File
     #TODO: includes need to import/compile/get exports
     includeDeferreds = @_resolveIncludes( moduleData.includes )
     
+    #CRUCIAL
     resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
     allLoadedPromise = resourcesPromise.spread(onSuccess, onFailure)
     
     finalPromise = allLoadedPromise.then ()=>
-      console.log "i am here sdf"
-      
       #load module
       #compile module
       #return exports
       @compile(sourceData.source)
-      console.log "exports", @exports
+      console.log "exports, current module", @exports
       return @exports
    
     return finalPromise

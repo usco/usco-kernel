@@ -1,3 +1,4 @@
+path = require('path')
 log = require('logerize') or console.log
 
 logger = {}
@@ -14,6 +15,13 @@ formatMessage=(message...)->
       result.push(item)
   result
 
+getExecutingModuleName=()->
+  modName = __filename #WRONG !! returns THIS filename , perhaps data should be passed by caller : console.log "module", module.id
+  modName = modName.split('.').shift() 
+  return ""
+  return path.basename( modName )
+  
+
 logger.log = (level, message)->
   levels = ['error', 'warn', 'info', 'debug'];
   if levels.indexOf(level) <= levels.indexOf(logger.level)
@@ -26,14 +34,14 @@ logger.debug = (message...)->
   message = message.join(" ")
   level = 'debug'
   if logger.levels.indexOf(level) <= logger.levels.indexOf(logger.level)
-    log.debug(message)
+    log.debug(getExecutingModuleName()+ " " +message)
 
 logger.info = (message...)->
   message = formatMessage(message)
   message = message.join(" ")
   level = "info"
   if logger.levels.indexOf(level) <= logger.levels.indexOf(logger.level)
-    log.info(message)
+    log.info(getExecutingModuleName()+ " " +message)
 
 logger.warn = (message...)->
   message = message.join(" ")

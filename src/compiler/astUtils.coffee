@@ -107,7 +107,6 @@ class ASTAnalyser
       #console.log("level",level)
       
       if node.type is esprima.Syntax.VariableDeclaration and level is 2
-        console.log("VariableDeclaration")
         for dec in node.declarations
           decName = dec.id.name
           #console.log "ElementName", decName
