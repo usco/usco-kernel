@@ -178,7 +178,7 @@ class CModule extends File
   
   _analyseSource:( source )->
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
-    moduleData = @_ASTAnalyser._walkAst( ast )
+    moduleData = @_ASTAnalyser.analyseAST( ast )
     
     return moduleData
   

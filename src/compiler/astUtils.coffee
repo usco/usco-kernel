@@ -2,11 +2,18 @@ logger = require("../../logger")
 logger.level = "debug"
 
 esprima = require "esprima"
+estraverse = require "estraverse"
 
 
 class ASTAnalyser
   constructor:->
 
+
+  codeToAst:( source )->
+    ast = esprima.parse(source, { range: false, loc: false , comment:false})
+    return ast
+  
+  
   ###*
   * Determine if current node is an "include" call node
   * @param {Object} node the AST node to test
@@ -26,6 +33,14 @@ class ASTAnalyser
     return (c and node.type == 'CallExpression' and c.type == 'Identifier' and c.name == 'importGeom')
   
   ###*
+  * Determine if current node is a "try catch" node
+  * @param {Object} node the AST node to test
+  * @return {boolean} true if node is an isImportGeom node, false otherwise
+  ###  
+  isTryCatch: ( node )->
+    return (node.type == 'TryStatement')
+  
+  ###*
   * Determine if current node is a parameter definition node
   * @param {Object} node the AST node to test
   * @return {boolean} true if node is a parameter node, false otherwise
@@ -37,7 +52,6 @@ class ASTAnalyser
       name = c.name
     #console.log "NODE", node, "callee",c, "Cname", name, "type",node.type, "name", node.name
     return (c and node.type == 'VariableDeclaration' and c.type == 'Identifier' and c.name == 'params')
-  
   
   ###*
   * Determine if current node is an instanciation
@@ -69,12 +83,26 @@ class ASTAnalyser
   
     ###
     
+    
+  ###*
+  * Find any variable assignements inside a (try) catch block: this is used to eliminate variables such as "error"
+  * from auto imports parsing
+  * @param {Object} tryStatementNode a tryStatementNode
+  * @return {List} a list of variable names that have been assigned inside 
+  ###  
+  findCatchVariables:( tryStatementNode ) ->
+    h = tryStatementNode.handlers[0]
+    h.CatchClause.body.BlockStatement.body[0].ExpressionStatement.expression.AssignmentExpression.left.Identifier.name
+    console.log "df"
+    return []
+  
+  
   ###*
   * Traverse the AST , analyse and spit out the needed information
   * @param {Object} ast the esprima generated AST
   * @return {Object} 
   ### 
-  _walkAst:( ast )=>
+  analyseAST:( ast )=>
     
     traverse = (object,limit,level, visitor, path) =>
       #console.log "level",level, "limit", limit, "path",path
