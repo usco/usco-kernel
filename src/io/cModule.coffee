@@ -218,6 +218,7 @@ class CModule extends File
     #TODO: do module loading here ?
     logger.debug "within script: include from #{uri}"
     uri = @assetManager._toAbsoluteUri( uri, @name ) #TODO : (YUCK usage of private method) !!!! we are getting RESOLVED uri's back, so all previously relative paths are absolute!
+    
     resource = CModule._cache[uri]
     if resource instanceof Error
       throw resource
@@ -230,8 +231,10 @@ class CModule extends File
   * can get called, thus this one only returns (sync) data from cache :
   * @return {Object} either the loaded resource, or an error instance, indicated why loading it failed
   ###
-  importGeom:( uri )->
+  importGeom:( uri )=>
     logger.debug "within script:  import geometry from #{uri}"
+    uri = @assetManager._toAbsoluteUri( uri, @name ) #TODO : (YUCK usage of private method) !!!! we are getting RESOLVED uri's back, so all previously relative paths are absolute!
+
     resource = CModule._cache[uri]
     if resource instanceof Error
       throw resource
@@ -276,9 +279,10 @@ class CModule extends File
       logger.debug("============START MODULE #{@name}===============")
       res = fn( @exports, @include, @importGeom, @, @assembly, @name)
       logger.debug("============END   MODULE #{@name}===============")
-      logger.error("Module #{@name} EXPORTS:", @exports)
+      logger.info("Module #{@name} EXPORTS:", @exports)
     catch error
       logger.error("Compiling module #{@name} failed: #{error}")
+      throw error
     #f = new Function(["module","assembly"], wrapper )
     #toto = f.apply(null, [module,assembly])
     
