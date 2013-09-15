@@ -49,6 +49,8 @@ class CModule extends File
     @children = []
     
     @loaded =  false #if @content == null then false else true
+    #if true, the module system will attempt to capture all root elements and add them to module.exports
+    @autoExports = true
     @exports = {}
     
     @_ASTAnalyser = new ASTAnalyser()
@@ -137,32 +139,6 @@ class CModule extends File
     d.then (includes)=>
   
   ###*
-  * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
-  * 
-  * 
-  ###
-  _resolveImports2:( importGeomsList )=>
-    console.log "importGeomsList",importGeomsList
-    imports = {}
-    for fileUri in importGeomsList
-      imports[fileUri] = @assetManager.loadResource( fileUri )
-    #imports = ({fileUri : @assetManager.loadResource( fileUri )} for fileUri in importGeoms)
-    logger.debug("Geometry imports : #{Object.keys(imports).length}" )
-    return imports
-
-  ###*
-  * pre fetch & cache "included" module (code import)
-  * 
-  ###
-  _resolveIncludes2:( includesList )=>
-    includes = {}
-    for fileUri in includesList
-      includes[fileUri] = @assetManager.loadResource( fileUri )
-    #includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
-    logger.debug("Includes: #{Object.keys(includes).length}")
-    return includes #Q.all(includeDeferreds)
-  
-  ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
   * if the user has not defined exports itself, all the elements at script root get added to exports
   * @param {String} rootElements the original source code
@@ -170,10 +146,23 @@ class CModule extends File
   ###
   _autoGenerateExports:( rootElements )=>
     #generate auto exports script
-    autoExportsSrc = ""
-    autoExportsSrc += "exports.#{elem}=#{elem};\n" for elem in rootElements
-    logger.debug("autoExports", autoExportsSrc) 
+    autoExportsSrc = "try{ if(Object.keys(module.exports).length === 0){"
+    #autoExportsSrc += "try{\n if(!'#{elem}' in module.exports){ module.exports.#{elem}=#{elem}; console.log('OI',module.exports); }\n}catch(e) {console.log('POUET',e)}" for elem in rootElements
+    autoExportsSrc += """
+    try{
+      if(!('#{elem}' in module.exports) )
+      { 
+        module.exports.#{elem}=#{elem}; 
+       }
+    }catch(e){} 
+    """ for elem in rootElements
+    autoExportsSrc += "}}catch(e){}"
     
+    
+    logger.debug("autoExports:\n", autoExportsSrc) 
+    
+    #(@exports[item] = item for item in rootElements) 
+    #@autoExports = autoExportsSrc #TODO: HACK !! do this better
     return autoExportsSrc
   
   _analyseSource:( source )->
@@ -257,11 +246,11 @@ class CModule extends File
       log.entries = []
       
       #{script}
-      
+      #{@autoExports}
      });
     """
     #TODO: add log , etc to includables (ie useable by include method above)
-    ##{@autoExports}@autoExports+ #YUCK !!! TODO: better way to do this
+    ##{@autoExports}+ #YUCK !!! TODO: better way to do this
     return wrapped
   
   compile:( source )=>
@@ -279,6 +268,7 @@ class CModule extends File
       logger.debug("============START MODULE #{@name}===============")
       res = fn( @exports, @include, @importGeom, @, @assembly, @name)
       logger.debug("============END   MODULE #{@name}===============")
+      console.log "export" , @exports
       logger.info("Module #{@name} EXPORTS:", @exports)
     catch error
       logger.error("Compiling module #{@name} failed: #{error}")

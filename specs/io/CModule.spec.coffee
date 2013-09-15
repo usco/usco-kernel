@@ -22,8 +22,7 @@ describe "CModule", ->
     
     assetManager = new AssetManager( stores )
     assetManager.addParser("stl", STLParser)
-  
-  
+
   it 'handles all necessary pre-processing',(done)->
     
     #source = """include("dummy:specs/data/test.coffee")"""
@@ -109,6 +108,37 @@ exports = module.exports = foo
       done()
   , 10000
   
+  it 'auto adds root elements to module exports', (done)->
+    source = """
+variableToExport = 42
+    """
+    
+    module = new CModule("dummy:specs/data/main.coffee", source)
+    module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
+    module.doAll()
+    .then ( exports ) =>
+      expect( exports ).toEqual ( { variableToExport : 42 }  )
+      done()
+    .fail (error) =>
+      expect(false).toBeTruthy error.message
+      done()
+
+  it 'only auto adds root elements to module exports when there are no manually defined exports ', (done)->
+    source = """
+variableToExport = 42
+module.exports.variableToExport = 76
+    """
+    
+    module = new CModule("dummy:specs/data/main.coffee", source)
+    module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
+    module.doAll()
+    .then ( exports ) =>
+      expect( exports ).toEqual ( { variableToExport : 76 }  )
+      done()
+    .fail (error) =>
+      expect(false).toBeTruthy error.message
+      done()
+
   it 'handles geometry data imports, as if imports where sync', (done)->
     source = """
 loadedGeometry = importGeom("./cube.stl")
@@ -145,5 +175,3 @@ module.exports = loadedGeometry
     .fail (error) =>
       expect(error).toEqual( expError )
       done()
-
-  

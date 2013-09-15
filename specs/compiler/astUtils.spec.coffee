@@ -26,6 +26,7 @@ describe "ASTAnalyser", ->
     try
       throw new Error("Dreadfull I tell you")
     catch error
+      testVar = "someTestThatShouldNotBeExported"
       console.log("error", error)
     
     fooInstance = new Foo(76)
@@ -33,7 +34,6 @@ describe "ASTAnalyser", ->
     exports.someData = firstVar + " " + secondVar
     """
     source = CoffeeScript.compile(source, {bare: true})
-    console.log "source", source
     ast = astAnalyser.codeToAst( source )
     results = astAnalyser.analyseAST( ast )
     

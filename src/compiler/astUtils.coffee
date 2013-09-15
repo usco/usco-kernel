@@ -91,11 +91,21 @@ class ASTAnalyser
   * @return {List} a list of variable names that have been assigned inside 
   ###  
   findCatchVariables:( tryStatementNode ) ->
-    h = tryStatementNode.handlers[0]
-    h.CatchClause.body.BlockStatement.body[0].ExpressionStatement.expression.AssignmentExpression.left.Identifier.name
-    console.log "df"
-    return []
+    innerVariables = []
+    try
+      h = tryStatementNode.handlers[0]
+      expressions = h.body.body
+      #console.log "expressions", h.body.body
+      for node in expressions
+        if node.type is "ExpressionStatement" and node.expression.type is "AssignmentExpression"
+          varName = node.expression.left.name
+          #console.log " VAR", varName
+          innerVariables.push( varName )
+    catch error
+      logger.error(error)
   
+    return innerVariables
+      
   
   ###*
   * Traverse the AST , analyse and spit out the needed information
@@ -139,6 +149,11 @@ class ASTAnalyser
           decName = dec.id.name
           #console.log "ElementName", decName
           rootElements.push( decName )
+      
+      #eliminate anythin in try blocks
+      if node.type is esprima.Syntax.TryStatement and level is 2
+        variableInTryBlock = @findCatchVariables( node )
+        rootElements = (item for item in rootElements when item not in variableInTryBlock) 
     
       if @isInclude( node )
         logger.debug("include",node.arguments[0].value)
@@ -153,7 +168,6 @@ class ASTAnalyser
         params.push( node.arguments[0].value )
         
       if @isInstanciation( node )
-        console.log("node",node)
         logger.debug("new instance of ",node.callee.name)
     
     logger.debug("found rootElements", rootElements)
