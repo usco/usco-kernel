@@ -152,8 +152,8 @@ module.exports = loadedGeometry
     module.assetManager = assetManager #dependency injection, a bit weird ass : TODO: creating modules might be better done by factory that injects this??
     module.doAll()
     .then ( exports ) =>
+      exports.id = 1  #since three.js id are auto incremented, force a false id
       expect( exports ).toEqual ( expData )
-      console.log("exports", exports)
       done()
     .fail (error) =>
       expect(false).toBeTruthy error.message
