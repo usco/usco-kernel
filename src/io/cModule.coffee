@@ -13,7 +13,7 @@ utils = require "../utils"
 btoa = utils.btoa
 merge = utils.merge
 
-
+THREE = require("three")
 
 ###* 
 * Coffeescad module : it is NOT a node.js module, although its purpose is similar, and a part of the code
@@ -25,6 +25,10 @@ class CModule extends File
   @_cache : {} #TODO: not good, redundant with asset manager
   
   @coreModules : {} #these are predefined modules , that can be "included"/"required" by the various modules TODO: how to handle this ?
+  
+  @coreModules["shapes"] = require("../shapes/api")
+  @coreModules["maths"] = require("../maths/maths")
+  @coreModules["assembly"] = new THREE.Object3D() #TODO : no good ! we should not rely excplitely on three.js here
   
   #STATIC method
   @_load:(request, parent, isMain)=>
@@ -42,6 +46,17 @@ class CModule extends File
   @_extensions["coffee"] = (module, fileName)->
     content = ""
     @compile(content, filename)
+ 
+  @_findPath = (request, paths) ->
+    exts = Object.keys(CModule._extensions)
+    
+    if not fileName
+      filename = tryCorePackage(basePath, exts)
+    if not fileName
+      filename = tryPackage(basePath, exts)
+    if not fileName
+      filename = tryExtensions(path.resolve(basePath, 'index'), exts)
+
   
   constructor:(name, content, parent)->
     super( name, content )
@@ -50,11 +65,15 @@ class CModule extends File
     
     @loaded =  false #if @content == null then false else true
     #if true, the module system will attempt to capture all root elements and add them to module.exports
-    @autoExports = true
+    @generateExports = true
+    @autoExports = ""
     @exports = {}
     
     @_ASTAnalyser = new ASTAnalyser()
     @assetManager = null
+    
+    #TODO: should this be here: it might make more sense to have it at class level ? 
+    @assembly = {}
     
 
   ###*
@@ -91,19 +110,16 @@ class CModule extends File
     srcMap.file = "toto"
     datauri = 'data:application/json;charset=utf-8;base64,'+btoa(JSON.stringify(srcMap))
     #source += "\n//@ sourceMappingURL=" + datauri
-
-    #console.log "v3map2", srcMap
     #logger.debug "JSIFIED script"
     #logger.debug source
     return {source:source,sourceMap:srcMap}
   
-  
   ###*
   * pre fetch & cache all "geometry" used by module ie stl, amf, obj etc, (LEVEL 0 implementation)
   * 
-  * 
+  * @return {object} a deferred list of geometry imports with both sucessed and failures
   ###
-  _resolveImports:( importGeoms )=>
+  _prefetchImports:( importGeoms )=>
     importDeferreds = (@assetManager.loadResource( fileUri, false, @name  ) for fileUri in importGeoms)
     logger.debug("Geometry import deferreds: #{importDeferreds.length}")
     
@@ -112,9 +128,14 @@ class CModule extends File
 
   ###*
   * pre fetch & cache "included" module (code import)
-  * 
+  * @return {object} a deferred list of includes with both sucessed and failures
   ###
-  _resolveIncludes:( includes )=>
+  _prefetchIncludes:( includes )=>
+    for fileUri in includes
+      #TODO: this needs to use the correct content resolution method (chek if uri is in coremodules, check by extensions etc)
+      if fileUri of CModule.coreModules
+        console.log "attempting to include core module", fileUri
+    
     includeDeferreds = (@assetManager.loadResource( fileUri, false, @name ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     
@@ -129,14 +150,6 @@ class CModule extends File
       d.resolve()
       return Q.allSettled( [p] )
     #return Q.allSettled(includeDeferreds)
-  
-  _resolveIncludesFull:( includes )=>
-    console.log "lkjlkj"
-    includeDeferreds = (@assetManager.loadResource( fileUri ) for fileUri in includes)
-    logger.debug("Include deferreds: #{includeDeferreds.length}")
-    
-    d = Q.allSettled(includeDeferreds)
-    d.then (includes)=>
   
   ###*
   * add level 0 (script root) variable , method & class definitions to module.exports
@@ -158,11 +171,7 @@ class CModule extends File
     """ for elem in rootElements
     autoExportsSrc += "}}catch(e){}"
     
-    
     logger.debug("autoExports:\n", autoExportsSrc) 
-    
-    #(@exports[item] = item for item in rootElements) 
-    #@autoExports = autoExportsSrc #TODO: HACK !! do this better
     return autoExportsSrc
   
   _analyseSource:( source )->
@@ -201,11 +210,16 @@ class CModule extends File
   
   
   ############################
-  ###Methods that get injected into evaled module code###
+  ###Methods that get injected into "evaled" module code###
   
   include:( uri )=>
     #TODO: do module loading here ?
     logger.debug "within script: include from #{uri}"
+    #TODO: this needs to use the correct content resolution method (chek if uri is in coremodules, check by extensions etc)
+    if uri of CModule.coreModules
+      console.log "attempting to include core module", uri
+      return  CModule.coreModules[uri]
+      
     uri = @assetManager._toAbsoluteUri( uri, @name ) #TODO : (YUCK usage of private method) !!!! we are getting RESOLVED uri's back, so all previously relative paths are absolute!
     
     resource = CModule._cache[uri]
@@ -229,23 +243,42 @@ class CModule extends File
       throw resource
     return resource
   
-  
   ###*
   * wraps module , injecting params such as exports, include/import/require method etc
-  * 
+  * @return {String}  the original source, wrapped inside the wrapped
   ###
   wrap:(script)->
     #TODO : what should be wrap: original code or converted ?
     #more likely the modified one, as this changes the ast?
+    #TODO:how to do logging?
     wrapped = """
-    return (function ( exports, include, importGeom, module, assembly, __filename)
+    return (function ( exports, include, importGeom, module, __filename)
     {
-      //console.log("include",include,"importGeom",importGeom);
-      //clear log entries
-      log = {}
-      log.entries = []
       
-      #{script}
+      //hack for now, otherwise getting weird JSON circular reference errors ???
+      assembly =  {} //include("assembly");
+      assembly.elems =[]
+      assembly.add = function( bla ){
+        assembly.elems.push(bla);
+      }
+      
+      //API
+      maths = include("maths");
+      shapes = include("shapes");
+      
+      //extract shapes to 'current' namespace
+      var __apiInjector__ = {}
+      
+      for (var key in shapes) { __apiInjector__[key] = shapes[key]; }
+      for (var key in maths)  { __apiInjector__[key] = maths[key];  }
+      //otherwise ... ye gads ! var Cube = shapes["Cube"]; for EACH key in shapes, maths etc
+      
+      with(__apiInjector__)
+      {
+        #{script}
+      }
+      
+      //add auto generated exports, if needed
       #{@autoExports}
      });
     """
@@ -256,19 +289,15 @@ class CModule extends File
   compile:( source )=>
     logger.info("compiling module #{@name}")
     wrapped = @wrap(source) 
-    #logger.debug("wrapped", wrapped)
-    
-    #TODO: should this be here:
-    @assembly = {}
-    
+    logger.debug("wrapped", wrapped)
     fn = null
     try
       f = new Function( wrapped )
       fn = f()
       logger.debug("============START MODULE #{@name}===============")
-      res = fn( @exports, @include, @importGeom, @, @assembly, @name)
+      #res = fn( @exports, @include, @importGeom, @, @name)
+      res = fn.call(fn, @exports, @include, @importGeom, @, @name, ) #we use call to force "this", to the current module
       logger.debug("============END   MODULE #{@name}===============")
-      console.log "export" , @exports
       logger.info("Module #{@name} EXPORTS:", @exports)
     catch error
       logger.error("Compiling module #{@name} failed: #{error}")
@@ -285,17 +314,16 @@ class CModule extends File
     moduleData = @_analyseSource(sourceData.source)
     
     #TODO: errmm not sure where this should be: it needs moduleData, but should also be part of the source
-    @autoExports = @_autoGenerateExports( moduleData.rootElements )
+    if @generateExports
+      @autoExports = @_autoGenerateExports( moduleData.rootElements )
     
     onSuccess = (importResults, includeResults)=>
       #console.log("imports, includes ok")
       #console.log("importResults", importResults)
       #console.log("includeResults", includeResults)
       #importsIncludes = merge( importResults, includeResults )
-      
       importsIncludes = importResults.value.concat( includeResults.value)
       #console.log "importsIncludes", importsIncludes
-      
       
       for importResult in importsIncludes
         #console.log "pouet", importResult
@@ -327,10 +355,10 @@ class CModule extends File
     
     #TODO : wowsers !!! at this point we only have raw data, with NO clue of the original file name !!!!! that must be kept somewhere !
     
-    importDeferreds = @_resolveImports( moduleData.importGeoms )
+    importDeferreds = @_prefetchImports( moduleData.importGeoms )
     
     #TODO: includes need to import/compile/get exports
-    includeDeferreds = @_resolveIncludes( moduleData.includes )
+    includeDeferreds = @_prefetchIncludes( moduleData.includes )
     
     #CRUCIAL
     resourcesPromise = Q.allSettled([importDeferreds, includeDeferreds])
