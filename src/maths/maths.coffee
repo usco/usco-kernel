@@ -1,5 +1,5 @@
-use 'strict'
-THREE = require 'THREE'
+'use strict'
+THREE = require 'three'
 
 ###*
   *All classes , functions etc defined here are simple wrappers, to make "logical" namespacing
@@ -9,7 +9,7 @@ THREE = require 'THREE'
 
 ###* 
 * 3d vector class: simple wrapper around THREE.Vector3 + some additional params parsing helpers
-###
+### 
 class Vector3 extends THREE.Vector3
   constructor:( options )->
     super(options)
@@ -18,12 +18,14 @@ class Vector2 extends THREE.Vector2
   constructor:( options )->
     super(options)
 
-#lines, curves
+#lines, curves  
+class SplineCurve3 extends THREE.SplineCurve3
+  
+###
+
 class Spline extends THREE.Spline
   constructor:( options )->
     super(options)
-    
-class SplineCurve3 extends THREE.SplineCurve3
 
 class ArcCurve extends THREE.ArcCurve
 
@@ -36,10 +38,10 @@ class QuadraticBezierCurve3 extends THREE.QuadraticBezierCurve3
 class Euler extends THREE.Euler
   constructor:( options )->
     super(options)
-
+###
 module.exports = 
   Vector2: Vector2
   Vector3: Vector3
   Spline3: SplineCurve3
-  Euler : Euleur
+  #Euler : Euleur
   

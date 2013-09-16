@@ -19,6 +19,8 @@ class ObjectBase extends THREE.Mesh
       opacity = 1
       material = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
     #super(geometry, material)
+    if not geometry?
+      geometry = null
     THREE.Mesh.call( @, geometry, material )
     
     

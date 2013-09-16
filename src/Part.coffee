@@ -1,4 +1,4 @@
-ObjectBase = require '../shapes/base'
+ObjectBase = require './shapes/base'
 
 ###*** 
 *Base class for defining "parts"
