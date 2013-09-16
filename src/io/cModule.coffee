@@ -3,6 +3,7 @@ assert = require('assert').ok
 CoffeeScript =  require('coffee-script')
 esprima = require "esprima"
 Q = require("q")
+path = require "path"
 
 logger = require("../../logger")
 logger.level = "debug"
@@ -14,6 +15,13 @@ btoa = utils.btoa
 merge = utils.merge
 
 THREE = require("three")
+
+
+#TODO: put this in pathUtils?
+tryCoreModules:( fileName, exts )=>
+  if not fileName in CModule.coreModules
+    return null
+  return fileName
 
 ###* 
 * Coffeescad module : it is NOT a node.js module, although its purpose is similar, and a part of the code
@@ -42,18 +50,37 @@ class CModule extends File
   
     #TODO : load content ???
     return module.exports
-    
+  
   @_extensions["coffee"] = (module, fileName)->
+    content = ""
+    @compile(content, filename)
+  
+  @_extensions["litcoffee"] = (module, fileName)->
+    content = ""
+    @compile(content, filename)
+ 
+  @_extensions["js"] = (module, fileName)->
     content = ""
     @compile(content, filename)
  
   @_findPath = (request, paths) ->
+    #resolution order:
+    #1 - if path is neither relative nor absolute:
+    #  a- look in core modules (if no extension is given, try all supported extensions)
+    #  b- look in modules relative to current (same as ./<ModuleName>) (if no extension is given, try all supported extensions)
+    #2 - if path is relative or absolute
+    #  a- if no extension is given, try all supported extensions
+    #  b- else, just resolve
+    
     exts = Object.keys(CModule._extensions)
+    curExt = path.extname(request)
+    basePath = path.basename(request)
+    console.log "exts",exts
+    
+    fileName = null
     
     if not fileName
-      filename = tryCorePackage(basePath, exts)
-    if not fileName
-      filename = tryPackage(basePath, exts)
+      filename = tryCoreModules(basePath, exts)
     if not fileName
       filename = tryExtensions(path.resolve(basePath, 'index'), exts)
 

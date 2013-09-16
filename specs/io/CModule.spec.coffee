@@ -23,6 +23,10 @@ describe "CModule", ->
     assetManager = new AssetManager( stores )
     assetManager.addParser("stl", STLParser)
 
+  
+  it 'has a path resolution system to find modules', ->
+    toto = CModule._findPath("toto.coffee")
+    
   it 'grants user defined code access to predefined api/core modules (maths, shapes etc)', (done)->
     source = """
     shape = new shapes.Cube()
