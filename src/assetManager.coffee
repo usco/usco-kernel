@@ -4,6 +4,8 @@ Q = require("q")
 logger = require("../logger")
 logger.level = "info"
 
+#TODO: perhaps we should seperate store TYPE (local , xhr, dropbox) from store NAME (the root uri ?)
+
 ###*
  *Manager for lifecyle of assets: load, store unload 
  *For external code files, stl, amf, textures, fonts etc
@@ -17,12 +19,22 @@ class AssetManager
   	
   	#extensions of code file names (do not need parsing, but more complex evaluating !!)
   	@codeExtensions = ["coffee","litcoffee","ultishape","scad"]
+  
+  _parseStoreName: ( uri )->
+    isXHr = uri.indexOf("http") isnt -1
+    if isXHr 
+      return "xhr"
+    
+    if (uri[0] is "/" ) 
+      return "local"
+    
+    if uri.indexOf(":") isnt -1
+      if uri.indexOf(":/") isnt -1 #windows
+        return "local"
+      return uri.split(":").shift() 
+    
+    return null#store name not found
   	
-  	#for relative paths: needs full uri (store included)
-  	#TODO: maybe this is not needed, full paths should be resolved else
-  	#where BEFORE asking the asset manager to load anything
-  	@currentLocation = ""
-      
   _parseFileUri: ( fileUri )->
     #extract store, file path etc
     #logger.debug "extracting store from", fileUri
@@ -85,10 +97,11 @@ class AssetManager
    * caching params : various cachin params : lifespan etc
    * If no store is specified, file paths are expected to be relative
   ###
-  loadResource: ( fileUri, transient, parentUri, cachingParams  )->
+  loadResource: ( fileUri, parentUri, cachingParams  )->
     #load resource, store it in resource map, return it for use
-    transient = transient or false    
     parentUri = parentUri or null
+    
+    transient = if cachingParams? then cachingParams.transient else false    
     
     deferred = Q.defer()
     
@@ -105,8 +118,6 @@ class AssetManager
     store = @stores[ storeName ]
     if not store
       throw new Error("No store named #{storeName}")
-    
-    
     
     if not (filename of @assetCache)
       extension = filename.split(".").pop()
@@ -144,26 +155,21 @@ class AssetManager
   *remove resource from cached assets
   ###
   unLoadResource: ( fileUri )->
-    #TODO : should resources be wrapped so we can deal with MANUAL reference counting etc?
+    #TODO : should resources be wrapped so we can deal with MANUAL reference counting, metadata etc?
     if (fileUri of @assetCache)
       delete @assetCache[ fileUri ]
+      
+  ###***
+  *load project (folder): TODO: should this be here ??
+  * @param {string} uri: folder/url path
+  ###
+  loadProject:( uri )->
+    deferred = Q.defer()
+    storeName = @_parseStoreName( uri )
+    console.log "storeName", storeName
+    
+    return deferred.promise
+  
 	
 module.exports = AssetManager
 
-
-#old code for fetching local files
-### 
-  _localSourceFetchHandler:([store,project,path,deferred])=>
-    #console.log "handler recieved #{store}/#{project}/#{path}"
-    result = ""
-    if not project? and path?
-      if @debug
-        console.log "will fetch #{path} from local (current project) namespace"
-      shortName = path
-      file = @project.rootFolder.get(shortName)
-      result = file.content
-      result = "\n#{result}\n"
-      deferred.resolve(result)
-    else if project? and path?
-      throw new Error("non prefixed includes can only get files from current project")
-###

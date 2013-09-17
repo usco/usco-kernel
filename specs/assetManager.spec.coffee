@@ -27,6 +27,29 @@ describe "AssetManager", ->
     stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
   
+  
+  it 'can extract the store name of most uris',->
+    obsStoreName = assetManager._parseStoreName("/home/foo/bar")
+    expStoreName = "local"
+    expect(obsStoreName).toEqual( expStoreName )
+    
+    obsStoreName = assetManager._parseStoreName("c:/MyDocuments/foo/bar")
+    expStoreName = "local"
+    expect(obsStoreName).toEqual( expStoreName )
+    
+    obsStoreName = assetManager._parseStoreName("dummy:specs/femur.stl")
+    expStoreName = "dummy"
+    expect(obsStoreName).toEqual( expStoreName )
+    
+    obsStoreName = assetManager._parseStoreName("https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl")
+    expStoreName = "xhr"
+    expect(obsStoreName).toEqual( expStoreName )
+    
+    obsStoreName = assetManager._parseStoreName("dropbox:OtherProject/someFile.coffee")
+    expStoreName = "dropbox"
+    expect(obsStoreName).toEqual( expStoreName )
+    
+  
   it 'should fail to load resources gracefully',(done)->
     assetManager.addParser("stl", STLParser)
     
@@ -42,7 +65,7 @@ describe "AssetManager", ->
     #relative, dummy store
     stores["dummy"].rootUri = path.resolve("./specs")
     fileUri = "./data/cube.stl"
-    assetManager.loadResource( fileUri,false, "dummy:specs/" ).done ( loadedResource ) =>
+    assetManager.loadResource( fileUri, "dummy:specs/" ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
     
     #absolute, dummy store
@@ -53,7 +76,7 @@ describe "AssetManager", ->
     
     #relative, remote store
     fileUri = "./femur.stl"
-    assetManager.loadResource( fileUri,false, "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/" ).done ( loadedResource ) =>
+    assetManager.loadResource( fileUri, "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/" ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
     
     #absolute, remote store
@@ -75,6 +98,15 @@ describe "AssetManager", ->
     assetManager.loadResource( fileUri ).done ( loadedResource ) =>
       expect( loadedResource ).not.toEqual(null)
       done()
+  
+  it 'can load projects', (done)->
+    uri = path.resolve("./specs/data/PeristalticPump")
+    assetManager.loadProject( uri )
+    .then ( loadedResource ) =>
+      expect( loadedResource ).not.toEqual(null)  
+    .fail( error ) ->
+      expect(false).toBeTruthy error.message
+      done()
   ###
   it 'caches resources by default',(done)->
     assetManager.addParser("stl", STLParser)
@@ -92,14 +124,14 @@ describe "AssetManager", ->
     
     expect(assetManager.assetCache).toEqual({})
     
-    assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
+    assetManager.loadResource( stlFileName, {transient:true} ).done (loadedResource) =>
       expect(assetManager.assetCache).toEqual({})
       done()    
   
   it 'can load source files (no parsing, raw text)',(done)->
     fileName = "dummy:specs/data/test.coffee"
     expSource = """assembly.add( new Cube() )"""
-    assetManager.loadResource( fileName, true ).done (loadedResource) =>
+    assetManager.loadResource( fileName, {transient:true} ).done (loadedResource) =>
       expect(loadedResource).toEqual(expSource)
       done()
   
@@ -112,9 +144,7 @@ describe "AssetManager", ->
       assetManager.unLoadResource( stlFileName )
       expect(assetManager.assetCache).toEqual({})
       done()   
-   ### 
-    
-###
+
   it 'can handle various file types via settable parsers',(done)->
     storeName = "dummy"
     
@@ -124,29 +154,10 @@ describe "AssetManager", ->
     stlFileName = "dummy:specs/data/cube.stl"
     amfFileName = "dummy:specs/data/Constellation.amf"
     
-    assetManager.loadResource( stlFileName, true ).done (loadedResource) =>
+    assetManager.loadResource( stlFileName, {transient:true} ).done (loadedResource) =>
       expect(loadedResource).toEqual({})
     
-    assetManager.loadResource( amfFileName, true ).done (loadedResource) =>
+    assetManager.loadResource( amfFileName, {transient:true} ).done (loadedResource) =>
       expect(loadedResource).toEqual({})
       done()
-
-    
-
-  it 'bla', (done)->
-    Q = require("q")
-    bla = new DummyXHRStore()
-    fileUri = "https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl"
-    #fileUri = "http://www.google.com"
-    
-    bla.loadFile( fileUri ).done ( loadedResource ) =>
-      console.log("prout loadedResource")#,loadedResource)
-      expect( loadedResource ).not.toEqual(null)
-      done()
-
-    checkDeferred Q.when(bla.loadFile( fileUri )), (loadedResource) =>
-      console.log("prout loadedResource",loadedResource)
-      expect( loadedResource ).not.toEqual(null)
-      
-  
-###  
+  ###  
