@@ -1,16 +1,14 @@
-###'use strict' 
+'use strict' 
 Kernel = require "../src/kernel"
 
+
+#Full tests : compile & export
 describe "Integration test", ->
   kernel = null
   
   beforeEach: ->
     kernel = new Kernel()
       
-  it 'can compile source code',->
-    source = """cube = new Cube();
+  it 'can compile a full project in a given folder, export it to a given format', ->
     
-    assembly.add(cube);
-    """
-    kernel.compile(source)
-###
+    #kernel.compile(source)

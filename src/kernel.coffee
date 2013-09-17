@@ -12,15 +12,20 @@ class Kernel
     @assetManager = new AssetManager( @stores )
     @geometryManager = new GeometryManager()
     
-    @compiler = new Compiler()
     @slicer = null
 
-  compile:( source )->
-    source = source or ""
-  
-  compileFile:( path )->
-    path = path or ""
+  compile:( pathOrSource )->
+    if not pathOrSource?
+      throw new Error("No path or source given")
+      
+    if (typeof pathOrSource == 'string' or pathOrSource instanceof String)
+      source = pathOrSource
+      
+    uri =  pathOrSource
+    #TODO: determine path type: perhaps reuse asset manager's sytem ?
+    #assetManager.loadProject() ???
     
+
   compileProject:( project ) ->
     project = project or ""
 

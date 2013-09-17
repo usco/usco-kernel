@@ -1,32 +1,6 @@
 'use strict'
 
-Compiler = require './compiler'
-
-
-class Folder extends Backbone.Collection
-  model: ProjectFile
-  sync : null
-  constructor:(options)->
-    super options
-    @_storageData = []
-
-  save:=>
-    for index, file of @models
-      file.sync = @sync
-      file.save() 
-    
-  changeStorage:(storeName,storeData)->
-    for oldStoreName in  @_storageData
-      delete @[oldStoreName]
-    @_storageData = []  
-    @_storageData.push(storeName)
-    @[storeName] = storeData
-    for index, file of @models
-      file.sync = @sync 
-      #file.pathRoot= project.get("name")
-
-
-###Main aspect of coffeescad : contains all the files
+### : contains all the files
   * project is a top level element ("folder" + metadata)
   * a project contains files 
   * a project can reference another project (includes)
