@@ -25,8 +25,10 @@ describe "CModule", ->
 
   
   it 'has a path resolution system to find modules', ->
-    toto = CModule._findPath("toto.coffee")
-    
+    toto = CModule._findPath("assembly")
+
+
+### 
   it 'grants user defined code access to predefined api/core modules (maths, shapes etc)', (done)->
     source = """
     shape = new shapes.Cube()
@@ -151,3 +153,4 @@ module.exports = loadedGeometry
     .fail (error) =>
       expect(error).toEqual( expError )
       done()
+  ###

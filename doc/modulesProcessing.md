@@ -41,5 +41,7 @@ since we will have that data in the object instances , it can be manipulated by 
 - if you compile your code, you should have a cube that has been translated once AND that "knows" it has been translated once
 - if you now use the onscreen VISUAL controls, to do a rotation by 45° on X, it adds a rotate([45,0,0]) transform to the history
 
-
+Npm package support:
+####################
+Given how similar the Module system is to npm packages, it could be a good way to distribute packages ???
 

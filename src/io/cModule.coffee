@@ -17,24 +17,29 @@ merge = utils.merge
 THREE = require("three")
 
 
+#TODO: have something like ? for imports ?
+#require.cache
+
 #TODO: put this in pathUtils?
-tryCoreModules:( fileName, exts )=>
-  if not fileName in CModule.coreModules
-    return null
-  return fileName
+tryCoreModules=( baseName, exts )=>
+  for ext in exts
+    fileName = baseName+".#{ext}"
+    console.log "fileName", fileName
+    if fileName in CModule.coreModules
+      return fileName
+  return null
 
 ###* 
 * Coffeescad module : it is NOT a node.js module, although its purpose is similar, and a part of the code
 * here is ported from node modules 
 ###
 class CModule extends File
-  
-  @_extensions : [] #should this be in asset manager ?
-  @_cache : {} #TODO: not good, redundant with asset manager
-  
+  @_cache : {} #TODO: remove this ? not good, redundant with asset manager
+  @_pathCache: {}
+  @_extensions: {} #should this be in asset manager ?
   @coreModules : {} #these are predefined modules , that can be "included"/"required" by the various modules TODO: how to handle this ?
   
-  @coreModules["shapes"] = require("../shapes/api")
+  @coreModules["shapes"] = require("../shapes/shapes")
   @coreModules["maths"] = require("../maths/maths")
   @coreModules["assembly"] = new THREE.Object3D() #TODO : no good ! we should not rely excplitely on three.js here
   
@@ -64,6 +69,7 @@ class CModule extends File
     @compile(content, filename)
  
   @_findPath = (request, paths) ->
+    #VERY close to the node.js one
     #resolution order:
     #1 - if path is neither relative nor absolute:
     #  a- look in core modules (if no extension is given, try all supported extensions)
@@ -73,6 +79,16 @@ class CModule extends File
     #  b- else, just resolve
     
     exts = Object.keys(CModule._extensions)
+    
+    if (request.charAt(0) is '/')
+      paths = ['']
+  
+    trailingSlash = (request.slice(-1) is '/')
+  
+    cacheKey = JSON.stringify({request: request, paths: paths});
+    if CModule._pathCache[cacheKey]
+      return CModule._pathCache[cacheKey]
+    
     curExt = path.extname(request)
     basePath = path.basename(request)
     console.log "exts",exts
@@ -80,9 +96,16 @@ class CModule extends File
     fileName = null
     
     if not fileName
-      filename = tryCoreModules(basePath, exts)
+      fileName = tryCoreModules(basePath, exts)
+      console.log "tryCoreModules" , fileName
     if not fileName
-      filename = tryExtensions(path.resolve(basePath, 'index'), exts)
+      fileName = tryExtensions(path.resolve(basePath, 'index'), exts)
+    
+    if fileName
+      CModule._pathCache[cacheKey] = fileName
+      return fileName
+      
+    return false
 
   
   constructor:(name, content, parent)->
@@ -147,7 +170,7 @@ class CModule extends File
   * @return {object} a deferred list of geometry imports with both sucessed and failures
   ###
   _prefetchImports:( importGeoms )=>
-    importDeferreds = (@assetManager.loadResource( fileUri, false, @name  ) for fileUri in importGeoms)
+    importDeferreds = (@assetManager.loadResource( fileUri, @name ) for fileUri in importGeoms)
     logger.debug("Geometry import deferreds: #{importDeferreds.length}")
     
     return Q.allSettled(importDeferreds)
@@ -163,7 +186,7 @@ class CModule extends File
       if fileUri of CModule.coreModules
         console.log "attempting to include core module", fileUri
     
-    includeDeferreds = (@assetManager.loadResource( fileUri, false, @name ) for fileUri in includes)
+    includeDeferreds = (@assetManager.loadResource( fileUri, @name ) for fileUri in includes)
     logger.debug("Include deferreds: #{includeDeferreds.length}")
     
     #TODO: remove, temporary
@@ -215,7 +238,7 @@ class CModule extends File
     
     exportsDeferred = Q.defer()
     
-    contentPromise = @assetManager.loadResource(fileName, false, parent.name)
+    contentPromise = @assetManager.loadResource(fileName, parent.name)
     
     contentPromise.then (content) =>
       logger.info("module content loaded", content)
