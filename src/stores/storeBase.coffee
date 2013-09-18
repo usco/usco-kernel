@@ -38,8 +38,6 @@ class StoreBase
     #tidily shut down this store: is this necessary ? as stores have the same lifecycle as
     #the app itself ?
   
-  listDir:( uri )=>
-  
   #TODO: all the project related stuff is TOO specific, would need to be extracted to somewhere else
   saveProject:( project, path )=> 
     console.log "saving project to #{@type}"
@@ -57,23 +55,24 @@ class StoreBase
       projectUri = project.uri
       #projectUri = @fs.join([@rootUri, project.name])
     
+  ###Possible updated (simplified) api###
+  list:( uri )->#get
   
-  loadProject:( projectUri, silent=false )=>
+  read:( uri )->#get
   
-  deleteProject:( projectName )=>
+  write:( data, uri )->#put
     
-  renameProject:( oldName, newName )=>
-    
-  saveFile:( file, uri )=>
+  move:( uri, newuri)->#copy + delete///rename
   
-  loadFile:( uri )=>
+  delete:( uri )->#delete
   
   ###-------------Helpers ----------------------------###
   getThumbNail:( projectName )=>
     
   spaceUsage: ->
     return {total:0, used:0, remaining:0, usedPercent:0}
-        
+ 
+  #replace spaceUsage with accountInfo?   
   
   ###--------------Private methods---------------------###
   _dispatchEvent:(eventName, data)=>
@@ -81,42 +80,5 @@ class StoreBase
       @pubSubModule.trigger(eventName, data)
     else
       console.log( "no pubsub system specified, cannot dispatch event")
-  
-  #deprecated
-  _sourceFetchHandler:([store,projectName,path])=>
-    #This method handles project/file content requests and returns appropriate data
-    if store != @storeShortName
-      throw new Error("Bad store name specified")
-    console.log "handler recieved #{store}/#{projectName}/#{path}"
-    result = ""
-    if not projectName? and path?
-      throw new Error("Cannot resolve this path in #{@storeType}")
-    else if projectName? and not path?
-      console.log "will fetch project #{projectName}'s namespace"
-      project = @getProject(projectName)
-      console.log project
-      namespaced = {}
-      for index, file of project.rootFolder.models
-        namespaced[file.name]=file.content
-        
-      namespaced = "#{projectName}={"
-      for index, file of project.rootFolder.models
-        namespaced += "#{file.name}:'#{file.content}'"
-      namespaced+= "}"
-      #namespaced = "#{projectName}="+JSON.stringify(namespaced)
-      #namespaced = """#{projectName}=#{namespaced}"""
-      result = namespaced
-      
-    else if projectName? and path?
-      console.log "will fetch #{path} from #{projectName}"
-      getContent=(project) =>
-        console.log project
-        project.rootFolder.fetch()
-        file = project.rootFolder.get(path)
-        result = file.content
-        result = "\n#{result}\n"
-        return result
-      @loadProject(projectName,true).done(getContent)
-      
      
 module.exports = StoreBase

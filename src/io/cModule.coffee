@@ -134,7 +134,7 @@ class CModule extends File
   
   ###*
   * prepare the source for compiling : convert coffee->js if needed , inject dependencies etc
-  * @param {String} the original source code
+  * @param {String} source the original source code
   * @return {String} the modified, possibly converted source code
   ###
   _prepareSource:( source )->

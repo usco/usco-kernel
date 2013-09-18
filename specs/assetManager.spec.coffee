@@ -2,22 +2,13 @@
 path = require "path"
 
 AssetManager = require "../src/assetManager"
-THREE = require 'three'
 STLParser = require "./STLParser"
 AMFParser = require "./AMFParser"
 
 DummyStore = require "./dummyStore"
 DummyXHRStore = require "./dummyXHRStore"
 
-checkDeferred=(df,fn) ->
-    callback = jasmine.createSpy()
-    df.then(callback)
-    waitsFor -> callback.callCount > 0
-    
-    runs -> 
-      fn.apply @,callback.mostRecentCall.args if fn
-
-            
+          
 describe "AssetManager", ->
   assetManager = null
   stores = []
