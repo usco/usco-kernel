@@ -13,10 +13,6 @@ class ObjectBase extends THREE.Mesh
   
   constructor:( geometry, material )->
     if not material?
-      material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: false } )
-      shine= 1500
-      spec= 1000
-      opacity = 1
       material = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
     #super(geometry, material)
     if not geometry?
@@ -28,8 +24,6 @@ class ObjectBase extends THREE.Mesh
     #TODO: should we be explicit , ie in basic shape class, or do it in processor/preprocessor
     @transforms = []
     
-    
-    #FIXME: see THREE.jS constructors thingamajig
     #console.log @prototype
     #Object.create(@prototype)
     @bsp = null

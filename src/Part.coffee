@@ -10,7 +10,7 @@ class Part extends ObjectBase
     #register(@__proto__.constructor.name, @, options)
     
     #defaults should always be stored, as the "baseline" for a part
-    @defaults = {manufactured:true}
+    @defaults = {version: 0.0.1, manufactured:true}
     options = merge @defaults, options
     
     #should this be even here ?
