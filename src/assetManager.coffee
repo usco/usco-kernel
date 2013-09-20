@@ -4,6 +4,7 @@ Q = require("q")
 logger = require("../logger")
 logger.level = "info"
 
+#TODO: add loading from git repos , with optional tag, commit, hash, branch etc (similar to npm dependencies)
 #TODO: perhaps we should seperate store TYPE (local , xhr, dropbox) from store NAME (the root uri ?)
 
 ###*
