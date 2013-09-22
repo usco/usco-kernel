@@ -23,5 +23,21 @@ toAbsoluteUri:(fileName, parentUri, store)->
   logger.debug("fullPath", fullPath)
   
   return fullPath
+
+parseStoreName: ( uri )->
+  isXHr = uri.indexOf("http") isnt -1
+  if isXHr 
+    return "xhr"
   
-module.exports = toAbsoluteUri
+  if (uri[0] is "/" ) 
+    return "local"
+  
+  if uri.indexOf(":") isnt -1
+    if uri.indexOf(":/") isnt -1 #windows
+      return "local"
+    return uri.split(":").shift() 
+  
+  return null#store name not found
+  
+module.exports.toAbsoluteUri = toAbsoluteUri
+module.exports.parseStoreName = parseStoreName

@@ -1,8 +1,8 @@
 'use strict'
 
+pathUtils = require "./modules/pathUtils"
 AssetManager = require "./assetManager"
 GeometryManager = require "./geometryManager"
-Compiler = require "./compiler/compiler"
 
 class Kernel
   constructor:(options)->
@@ -22,12 +22,10 @@ class Kernel
       source = pathOrSource
       
     uri =  pathOrSource
+    store = pathUtils.parseStoreName( uri )
     #TODO: determine path type: perhaps reuse asset manager's sytem ?
     #assetManager.loadProject() ???
     
-
-  compileProject:( project ) ->
-    project = project or ""
 
   ###* 
   * compile source and export to the specified formats

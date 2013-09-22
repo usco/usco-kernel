@@ -21,21 +21,6 @@ class AssetManager
   	#extensions of code file names (do not need parsing, but more complex evaluating !!)
   	@codeExtensions = ["coffee","litcoffee","ultishape","scad"]
   
-  _parseStoreName: ( uri )->
-    isXHr = uri.indexOf("http") isnt -1
-    if isXHr 
-      return "xhr"
-    
-    if (uri[0] is "/" ) 
-      return "local"
-    
-    if uri.indexOf(":") isnt -1
-      if uri.indexOf(":/") isnt -1 #windows
-        return "local"
-      return uri.split(":").shift() 
-    
-    return null#store name not found
-  	
   _parseFileUri: ( fileUri )->
     #extract store, file path etc
     #logger.debug "extracting store from", fileUri

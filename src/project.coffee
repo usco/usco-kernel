@@ -58,10 +58,9 @@ class Project
     @trigger("save", @)
     
   compile:(options)=>
-    if not @compiler?
-      throw new Error("No compiler specified")
-    @compiler.project = @
-    return @compiler.compile(options)
+    mainModule = @name + ".coffee" #TODO: hanlde different extensions
+    mainModule = ????? #TODO: how the hell do we handle this ???
+    mainModule.compile( options )
   
   injectContent:(content, fileName)=>
     #add content (code to either the main, or a specific file)
