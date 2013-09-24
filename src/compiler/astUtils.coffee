@@ -8,11 +8,9 @@ estraverse = require "estraverse"
 class ASTAnalyser
   constructor:->
 
-
   codeToAst:( source )->
     ast = esprima.parse(source, { range: false, loc: false , comment:false})
     return ast
-  
   
   ###*
   * Determine if current node is an "include" call node
@@ -176,6 +174,18 @@ class ASTAnalyser
     logger.debug("found params",params)    
     
     return {rootElements:rootElements, includes:includes, importGeoms:importGeoms}
+
+
+  ###*
+  * TODO: find other name
+  * this traces the impact of a variable on the rest of the code : ie if a variable is used in an expression, which is in turned used to compute
+  * another variable we want to know that
+  * @param {String} variableName, name of the variable to trace
+  * @param {Object} rootNode the AST node to start at
+  * @return {boolean}  ?????
+  ### 
+  traceVariableImpact:( variableName, rootNode )->
+    #TODO: should it return a list / tree of nodes where it gets used, starting at initialization ????
     
 
 module.exports = ASTAnalyser

@@ -79,6 +79,6 @@ class StoreBase
     if @pubSubModule?
       @pubSubModule.trigger(eventName, data)
     else
-      console.log( "no pubsub system specified, cannot dispatch event")
+      throw new Error( "no pubsub system specified, cannot dispatch event" )
      
 module.exports = StoreBase
