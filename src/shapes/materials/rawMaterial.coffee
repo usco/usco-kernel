@@ -1,6 +1,6 @@
 
 
-class BaseMaterial_future #TODO: all these properties will be used in the future, for now see BaseMaterial class, keeping it simple
+class RawMaterial
   constructor:->
     #TODO: brainstorm : http://en.wikipedia.org/wiki/List_of_materials_properties
     #some properties would be calculated obviously
@@ -14,7 +14,7 @@ class BaseMaterial_future #TODO: all these properties will be used in the future
     @absorbtion = ""
     @color = ""#color : RGBA
     @luminosity = ""
-    @reflectivity = "" #http://gamedev.stackexchange.com/questions/19963/where-can-i-get-a-list-or-data-base-of-light-reflectance-values-for-different-ma
+    @reflectivity = ""
     @refractivity = ""
     @scatering = ""
     @transmitance = ""
@@ -40,30 +40,7 @@ class BaseMaterial_future #TODO: all these properties will be used in the future
     shine= 1500
     spec= 1000
     opacity = 1
-    @_threeJsMaterial = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
-
-
-class BaseMaterial
-  constructor:->
-    #optical :
-    @color = ""#color : RGBA
-    @reflectivity = 0.5
-    @refractivity = 1.46 #PLA
+    @threeJsMaterial = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
     
-    #physical/mecanical
-    @restitution = 0.2 #elasticity
-    
-    #electrical
-    @conductivity = 10e−14#hard rubber (as per wikipedia)
-    @resistivity = 10e13 #hard rubber (as per wikipedia)ohm m−1
-    
-    @_threeJsMaterial = new THREE.MeshPhongMaterial({color:  @color , shading: THREE.SmoothShading}) 
-
-  ###*
-  *Necessary to recalculate values of the three.js material used for display (color etc)
-  ###    
-  getTHreeMaterial:->
-    @_threeJsMaterial = new THREE.MeshPhongMaterial({color:  @color , shading: THREE.SmoothShading}) 
-    return @_threeJsMaterial
 
 module.exports = BaseMaterial
