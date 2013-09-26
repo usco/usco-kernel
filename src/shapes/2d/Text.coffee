@@ -1,38 +1,25 @@
-define (require) ->
-  ObjectBase = require '../base'
+utils = require '../utils'
+merge = utils.merge
+Shape2d = require './shape2d'
+
+###* 
+* Construct a 2D text (extrudeable)
+* @param {object} size: size of text (default 10)
+* @param {string} font: font of text (default "helvetiker")
+* @param {object} center: center of circle (default [0,0,0])
+* @param {object} o: (orientation): vector towards wich the circle should be facing
+* @param {int} $fn: (resolution) corner resolution
+###
+class Text extends Shape2d
   
-  utils = require '../utils'
-  merge = utils.merge
-  
-  class Text
-    # Construct a 2D text (extrudeable)
-    # Parameters:
-    #   size: size of text (default 10)
-    #   font: font of text (default "helvetiker")
-    #   $fn: corner resolution
-    #  
-    constructor:(options)->
-      options = options or {}
-      defaults = { text: "Hello coffee!", size:10, divisions:10, font:"helvetiker" }
-      options = merge(defaults, options)
-      
-      @textShapes = THREE.FontUtils.generateShapes(options.text,options)
-      ###      hash = document.location.hash.substr( 1 )
-      if ( hash.length != 0 )
-        theText = hash###
-      
-    extrude:(options)->
-      #TODO: move to higher level class
-      defaults = { amount: 5,  bevelEnabled: false, bevelSegments: 2, steps: 2 }
-      options = merge(defaults, options)
-      
-      text3d = new THREE.ExtrudeGeometry( @textShapes, options )
-      text3d.computeBoundingBox()
-      text3d.computeVertexNormals()
-      
-      textMaterial = new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff})
-      
-      text3d = new ObjectBase( text3d, textMaterial )
-      return text3d 
-       
-  return Text
+  constructor:(options)->
+    options = options or {}
+    defaults = { text: "Hello coffee!", size:10, divisions:10, font:"helvetiker" }
+    options = merge(defaults, options)
+    
+    @textShapes = THREE.FontUtils.generateShapes(options.text,options)
+    ###      hash = document.location.hash.substr( 1 )
+    if ( hash.length != 0 )
+      theText = hash###
+     
+module.exports = Text

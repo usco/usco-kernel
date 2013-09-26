@@ -1,5 +1,10 @@
 THREE = require('three')
 
+linear = "L"
+rotate = "R"
+path   = "P"
+
+
 ###* 
 * Basic "straigth line" extrusion of 2d shape
 * with optional "twist"
@@ -22,7 +27,7 @@ rotateExtrude = ( geometry2D, options ) ->
 * Spline/bezier curve based extrusion of 2d shape : the 2d shape is extuded along the given spline
 * allow creation from points or directly from curve
 ### 
-splineExtrude = ( geometry2D, options ) ->
+pathExtrude = ( geometry2D, options ) ->
   extrusionSettings = {
     size: 30, height: 4, curveSegments: 3,
     bevelThickness: 1, bevelSize: 2, bevelEnabled: false,
@@ -44,4 +49,5 @@ splineExtrude = ( geometry2D, options ) ->
 
 module.exports.linearExtrude = linearExtrude
 module.exports.rotateExtrude = rotateExtrude
-module.exports.splineExtrude = splineExtrude
+module.exports.pathExtrude   = pathExtrude
+module.exports.types = {linear:linear,rotate:rotate,path:path}
