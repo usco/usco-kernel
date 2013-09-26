@@ -1,9 +1,9 @@
 'use strict'
-logger = require("../logger")
+logger = require("../../logger")
 logger.level = "debug"
 
 #TODO: should this be specific to each store??
-toAbsoluteUri:(fileName, parentUri, store)->
+toAbsoluteUri=(fileName, parentUri, store)->
   #normalization test
   path = require 'path'
   
@@ -24,7 +24,7 @@ toAbsoluteUri:(fileName, parentUri, store)->
   
   return fullPath
 
-parseStoreName: ( uri )->
+parseStoreName= ( uri )->
   isXHr = uri.indexOf("http") isnt -1
   if isXHr 
     return "xhr"

@@ -1,3 +1,4 @@
+### 
 Processor = require "../../src/compiler/processor"
   
 describe "Processor", ->
@@ -7,7 +8,7 @@ describe "Processor", ->
   beforeEach ->
     processor = new Processor()
   
-  ###  
+  
   it 'generates an assembly of shapes from code', (done)->
     source = "assembly.add( new Cube() )"
     
@@ -28,7 +29,7 @@ describe "Processor", ->
     .catch ( error ) =>
       console.log( "processor error", error )
       done()
-  , 400###
+  , 400
   
   it 'avoid recompiling on trivial changes (comments, whitespace', (done)->
     source = "assembly.add( new Cube() )"
@@ -38,4 +39,4 @@ describe "Processor", ->
       processor.processScript( source )
       expect( processor.reEvalutate ).toBe( false )
       done()
- 
+###

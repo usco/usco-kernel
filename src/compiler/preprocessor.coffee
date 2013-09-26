@@ -11,7 +11,7 @@ Q = require("q")
 #graphDiff = require('graph-difference')
 #DepGraph = require('dependency-graph').DepGraph
 
-File = require "../io/file"
+File = require "../modules/file"
 ASTAnalyser = require "./astUtils"
 utils = require "../utils"
 btoa = utils.btoa

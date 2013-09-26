@@ -18,29 +18,7 @@ describe "AssetManager", ->
     stores["xhr"] = new DummyXHRStore()
     assetManager = new AssetManager( stores )
   
-  
-  it 'can extract the store name of most uris',->
-    obsStoreName = assetManager._parseStoreName("/home/foo/bar")
-    expStoreName = "local"
-    expect(obsStoreName).toEqual( expStoreName )
-    
-    obsStoreName = assetManager._parseStoreName("c:/MyDocuments/foo/bar")
-    expStoreName = "local"
-    expect(obsStoreName).toEqual( expStoreName )
-    
-    obsStoreName = assetManager._parseStoreName("dummy:specs/femur.stl")
-    expStoreName = "dummy"
-    expect(obsStoreName).toEqual( expStoreName )
-    
-    obsStoreName = assetManager._parseStoreName("https://raw.github.com/kaosat-dev/repBug/master/cad/stl/femur.stl")
-    expStoreName = "xhr"
-    expect(obsStoreName).toEqual( expStoreName )
-    
-    obsStoreName = assetManager._parseStoreName("dropbox:OtherProject/someFile.coffee")
-    expStoreName = "dropbox"
-    expect(obsStoreName).toEqual( expStoreName )
-    
-  
+
   it 'should fail to load resources gracefully',(done)->
     assetManager.addParser("stl", STLParser)
     

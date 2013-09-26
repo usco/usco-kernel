@@ -1,4 +1,5 @@
-'use strict' 
+'use strict'
+### 
 Kernel = require "../src/kernel"
 
 
@@ -12,3 +13,4 @@ describe "Integration test", ->
   it 'can compile a full project in a given folder, export it to a given format', ->
     
     #kernel.compile(source)
+###

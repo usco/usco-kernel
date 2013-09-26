@@ -1,3 +1,4 @@
+maths = require "../maths/maths"
 THREE = require( 'three' )
 ThreeCSG =  require( '../../vendor/ThreeCSG' )
   
@@ -6,12 +7,12 @@ ThreeCSG =  require( '../../vendor/ThreeCSG' )
 #TODO: add connectors
 #TODO: since we want objects / parts to be exportable individually, perhaps adding "export" methods to them
 # would be a good idea ...
-
+Vector3 = maths.Vector3
 
 class ObjectBase extends THREE.Mesh
   #base class regrouping features of THREE.Mesh and THREE.CSG
   
-  constructor:( geometry, material )->
+  constructor:( geometry, orientation, material )->
     if not material?
       material = new THREE.MeshPhongMaterial({color:  0xFFFFFF , shading: THREE.SmoothShading,  shininess: shine, specular: spec, metal: false}) 
     #super(geometry, material)
@@ -19,7 +20,7 @@ class ObjectBase extends THREE.Mesh
       geometry = null
     THREE.Mesh.call( @, geometry, material )
     
-    
+    orientation = orientation or new Vector3(0,0,1)
     #VERY important : transforms stack : all operations done on this shape is stored here
     #TODO: should we be explicit , ie in basic shape class, or do it in processor/preprocessor
     @transforms = []

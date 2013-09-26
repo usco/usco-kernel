@@ -1,9 +1,9 @@
 'use strict'
-
+###
 #PreProcessor = require "../../src/compiler/preprocessor"
 AssetManager = require "../../src/assetManager"
 PreProcessor = require "../../src/compiler/preprocessor"
-File = require "../../src/io/file"
+File = require "../../src/modules/file"
 
 DummyStore = require "../dummyStore"
 DummyXHRStore = require "../dummyXHRStore"
@@ -96,11 +96,7 @@ dummy = new Dummy()
     .fail (error) =>
       expect(false).toBeTruthy error.message
       done()
- 
- 
-  
-  
-  ###
+
   it 'handle include statements',(done)-> #seriously?
     #testFile = new File( "testFile.coffee", """include("config.coffee")""")
     testFile = new File( "testFile.coffee", """include("dummy:specs/data/test.coffee")""")

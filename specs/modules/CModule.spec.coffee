@@ -4,8 +4,8 @@ fs = require("fs")
 path = require("path")
 
 AssetManager = require "../../src/assetManager"
-CModule = require "../../src/module/cModule"
-File = require "../../src/module/file"
+CModule = require "../../src/modules/cModule"
+File = require "../../src/modules/file"
 
 DummyStore = require "../dummyStore"
 DummyXHRStore = require "../dummyXHRStore"

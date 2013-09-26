@@ -68,6 +68,7 @@ describe "ASTAnalyser", ->
     
     #astAnalyser.traceVariableImpact:( variableName, null )
     #TODO: remove this: for testing
+    ### 
     esgraph = require('esgraph')
     esprima = require('esprima')
     fs = require('fs')
@@ -78,5 +79,6 @@ describe "ASTAnalyser", ->
     
     fs.writeFileSync( "AST_graph.dot", dot )
     #CMD line to generate graph : dot -Tpng -ooutput.png AST_graph.dot
+    ###
     
 
