@@ -1,7 +1,7 @@
 'use strict'
 
 pathUtils = require "./modules/pathUtils"
-AssetManager = require "./assetManager"
+AssetManager = require "usco-assetmanager"
 GeometryManager = require "./geometryManager"
 
 class Kernel
